@@ -1,5 +1,5 @@
 import 'package:fight_my_shadow/models/move.dart';
-import 'package:fight_my_shadow/data/moves_data.dart' as moves_data;
+import 'package:fight_my_shadow/data/boxing_moves_data.dart' as boxing_data;
 
 /// Abstract interface for accessing Move data.
 ///
@@ -20,42 +20,40 @@ abstract class MoveRepository {
   /// ```
   Move? getMoveById(int id);
 
+  /// Gets a move by its code string (works for numbers and letters).
+  ///
+  /// Example:
+  /// ```dart
+  /// final jab = repository.getMoveByCode('1');
+  /// final slipLeft = repository.getMoveByCode('A');
+  /// ```
+  Move? getMoveByCode(String code);
+
   /// Gets all moves of a specific category.
   ///
   /// Example:
   /// ```dart
   /// final punches = repository.getMovesByCategory(MoveCategory.punch);
-  /// final kicks = repository.getMovesByCategory(MoveCategory.kick);
+  /// final defense = repository.getMovesByCategory(MoveCategory.defense);
   /// ```
   List<Move> getMovesByCategory(MoveCategory category);
 
   /// Gets all punch moves (convenience method).
-  ///
-  /// Returns all moves with category [MoveCategory.punch].
   List<Move> getAllPunches();
 
-  /// Gets all kick moves (convenience method).
-  ///
-  /// Returns all moves with category [MoveCategory.kick].
-  List<Move> getAllKicks();
+  /// Gets all defense moves (convenience method).
+  List<Move> getAllDefense();
 
-  /// Gets moves in a specific ID range.
-  ///
-  /// Useful for creating combinations with limited move sets.
-  ///
-  /// Example:
-  /// ```dart
-  /// final basicMoves = repository.getMovesInRange(1, 6);  // Basic punches
-  /// ```
-  List<Move> getMovesInRange(int startId, int endId);
+  /// Gets all footwork moves (convenience method).
+  List<Move> getAllFootwork();
 
   /// Gets the total number of available moves.
   int get totalMoves;
 }
 
-/// In-memory implementation of [MoveRepository].
+/// In-memory implementation of [MoveRepository] for Boxing.
 ///
-/// Uses a predefined list of 21 moves stored in memory.
+/// Uses a predefined list of Boxing moves stored in memory.
 /// This is the current default implementation.
 ///
 /// Usage:
@@ -63,39 +61,45 @@ abstract class MoveRepository {
 /// final repository = InMemoryMoveRepository();
 /// final allMoves = repository.getAllMoves();
 /// final jab = repository.getMoveById(1);
+/// final slipLeft = repository.getMoveByCode('A');
 /// ```
 class InMemoryMoveRepository implements MoveRepository {
   @override
   List<Move> getAllMoves() {
     // Return an unmodifiable list to prevent accidental modifications
-    return List.unmodifiable(moves_data.allMoves);
+    return List.unmodifiable(boxing_data.boxingMoves);
   }
 
   @override
   Move? getMoveById(int id) {
-    return moves_data.getMoveById(id);
+    return boxing_data.getMoveById(id);
+  }
+
+  @override
+  Move? getMoveByCode(String code) {
+    return boxing_data.getMoveByCode(code);
   }
 
   @override
   List<Move> getMovesByCategory(MoveCategory category) {
-    return moves_data.getMovesByCategory(category);
+    return boxing_data.getMovesByCategory(category);
   }
 
   @override
   List<Move> getAllPunches() {
-    return moves_data.getAllPunches();
+    return boxing_data.getAllPunches();
   }
 
   @override
-  List<Move> getAllKicks() {
-    return moves_data.getAllKicks();
+  List<Move> getAllDefense() {
+    return boxing_data.getAllDefense();
   }
 
   @override
-  List<Move> getMovesInRange(int startId, int endId) {
-    return moves_data.getMovesInRange(startId, endId);
+  List<Move> getAllFootwork() {
+    return boxing_data.getAllFootwork();
   }
 
   @override
-  int get totalMoves => moves_data.totalMoves;
+  int get totalMoves => boxing_data.totalMoves;
 }

@@ -1,8 +1,32 @@
+/// Represents the training discipline for a move
+enum Discipline {
+  boxing,
+  kickboxing,
+  muayThai,
+  kungFu,
+}
+
+/// Extension to get display-friendly labels for disciplines
+extension DisciplineExtension on Discipline {
+  String get label {
+    switch (this) {
+      case Discipline.boxing:
+        return 'Boxing';
+      case Discipline.kickboxing:
+        return 'Kickboxing';
+      case Discipline.muayThai:
+        return 'Muay Thai';
+      case Discipline.kungFu:
+        return 'Kung Fu';
+    }
+  }
+}
+
 /// Represents the category/type of a fighting move
 enum MoveCategory {
   punch,
-  kick,
-  other,
+  defense,
+  footwork,
 }
 
 /// Extension to get display-friendly labels for move categories
@@ -11,46 +35,50 @@ extension MoveCategoryExtension on MoveCategory {
     switch (this) {
       case MoveCategory.punch:
         return 'Punch';
-      case MoveCategory.kick:
-        return 'Kick';
-      case MoveCategory.other:
-        return 'Other';
+      case MoveCategory.defense:
+        return 'Defense';
+      case MoveCategory.footwork:
+        return 'Footwork';
     }
   }
 }
 
-/// Represents a single fighting move (punch, kick, etc.)
+/// Represents a single fighting move.
 ///
 /// This is an immutable value object that defines a move used in
-/// kickboxing/Muay Thai combinations.
+/// martial arts combinations.
 ///
 /// Example:
 /// ```dart
 /// const jab = Move(
 ///   id: 1,
 ///   code: '1',
-///   name: 'Left straight (jab)',
+///   name: 'Left straight',
 ///   category: MoveCategory.punch,
-///   description: 'A quick, straight punch with the lead hand...',
+///   discipline: Discipline.boxing,
 /// );
 /// ```
 class Move {
-  /// Unique stable identifier for this move (1-23)
+  /// Unique stable identifier for this move
   final int id;
 
-  /// Short code used in numeric combinations (e.g., "1", "2", "F", "S")
+  /// Short code used in combinations (e.g., "1", "2", "A", "N")
+  /// This is the primary external label for the move
   final String code;
 
-  /// Full human-readable name (e.g., "Left straight (jab)")
+  /// Full human-readable name (e.g., "Left straight", "Slip left")
   final String name;
 
   /// The category/type of this move
   final MoveCategory category;
 
-  /// Detailed description explaining what the move is and how to execute it
+  /// The training discipline this move belongs to
+  final Discipline discipline;
+
+  /// Optional detailed description explaining what the move is and how to execute it
   final String? description;
 
-  /// Key coaching tips, cues, or common mistakes to avoid
+  /// Optional coaching tips, cues, or common mistakes to avoid
   final List<String>? tips;
 
   /// Optional path to an asset image or animation (e.g., 'assets/moves/jab.gif')
@@ -61,19 +89,19 @@ class Move {
     required this.code,
     required this.name,
     required this.category,
+    required this.discipline,
     this.description,
     this.tips,
     this.assetPath,
   });
 
   /// Creates a copy of this move with the given fields replaced
-  ///
-  /// Useful for future extensibility when adding optional fields
   Move copyWith({
     int? id,
     String? code,
     String? name,
     MoveCategory? category,
+    Discipline? discipline,
     String? description,
     List<String>? tips,
     String? assetPath,
@@ -83,6 +111,7 @@ class Move {
       code: code ?? this.code,
       name: name ?? this.name,
       category: category ?? this.category,
+      discipline: discipline ?? this.discipline,
       description: description ?? this.description,
       tips: tips ?? this.tips,
       assetPath: assetPath ?? this.assetPath,
@@ -91,7 +120,7 @@ class Move {
 
   @override
   String toString() {
-    return 'Move(id: $id, code: "$code", name: "$name", category: ${category.name})';
+    return 'Move(id: $id, code: "$code", name: "$name", category: ${category.name}, discipline: ${discipline.name})';
   }
 
   @override

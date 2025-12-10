@@ -2,32 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 
-/// Screen that displays all available moves in a scrollable list.
+/// Screen that displays all available moves grouped by category.
 ///
-/// This is a read-only view of the moves catalog.
+/// Shows Boxing moves organized into Punches, Defense, and Footwork sections.
 class MovesScreen extends StatelessWidget {
   const MovesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final repository = InMemoryMoveRepository();
-    final moves = repository.getAllMoves();
+
+    // Get moves by category
+    final punches = repository.getMovesByCategory(MoveCategory.punch);
+    final defense = repository.getMovesByCategory(MoveCategory.defense);
+    final footwork = repository.getMovesByCategory(MoveCategory.footwork);
+
+    // Sort punches numerically by code (1, 2, 3, ..., 14)
+    punches.sort((a, b) {
+      final aNum = int.tryParse(a.code) ?? 999;
+      final bNum = int.tryParse(b.code) ?? 999;
+      return aNum.compareTo(bNum);
+    });
+
+    // Sort defense and footwork alphabetically by code
+    defense.sort((a, b) => a.code.compareTo(b.code));
+    footwork.sort((a, b) => a.code.compareTo(b.code));
+
+    final totalMoves = repository.totalMoves;
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            _buildHeader(context, moves.length),
+            _buildHeader(context, totalMoves),
 
-            // Moves list
+            // Moves list with category sections
             Expanded(
-              child: ListView.builder(
+              child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                itemCount: moves.length,
-                itemBuilder: (context, index) {
-                  return _MoveListItem(move: moves[index]);
-                },
+                children: [
+                  // Punches section
+                  _buildSectionHeader(context, 'Punches', punches.length),
+                  ...punches.map((move) => _MoveListItem(move: move)),
+                  const SizedBox(height: 16),
+
+                  // Defense section
+                  _buildSectionHeader(context, 'Defense', defense.length),
+                  ...defense.map((move) => _MoveListItem(move: move)),
+                  const SizedBox(height: 16),
+
+                  // Footwork section
+                  _buildSectionHeader(context, 'Footwork', footwork.length),
+                  ...footwork.map((move) => _MoveListItem(move: move)),
+                ],
               ),
             ),
           ],
@@ -63,7 +91,7 @@ class MovesScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'MOVES',
+                  'BOXING MOVES',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w800,
@@ -71,7 +99,7 @@ class MovesScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$moveCount punches & kicks',
+                  '$moveCount moves total',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withOpacity(0.6),
                       ),
@@ -96,6 +124,41 @@ class MovesScreen extends StatelessWidget {
               Icons.sports_martial_arts,
               color: Colors.white,
               size: 24,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      child: Row(
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$count',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
             ),
           ),
         ],
@@ -197,13 +260,13 @@ class _MoveListItem extends StatelessWidget {
         categoryColor = Colors.orange.shade700;
         categoryIcon = Icons.front_hand;
         break;
-      case MoveCategory.kick:
+      case MoveCategory.defense:
         categoryColor = Colors.blue.shade700;
-        categoryIcon = Icons.sports_martial_arts;
+        categoryIcon = Icons.shield;
         break;
-      case MoveCategory.other:
-        categoryColor = Colors.grey.shade700;
-        categoryIcon = Icons.more_horiz;
+      case MoveCategory.footwork:
+        categoryColor = Colors.purple.shade700;
+        categoryIcon = Icons.directions_walk;
         break;
     }
 
