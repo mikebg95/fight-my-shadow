@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fight_my_shadow/screens/moves_screen.dart';
+import 'package:fight_my_shadow/screens/library_screen.dart';
 
 void main() {
   runApp(const FightMyShadowApp());
@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              // View Moves button
+              // Library button
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1A1A),
@@ -208,16 +208,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: IconButton(
                   icon: const Icon(
-                    Icons.list_alt,
+                    Icons.library_books,
                     color: Colors.white,
                     size: 22,
                   ),
-                  tooltip: 'View moves',
+                  tooltip: 'Library',
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MovesScreen(),
+                        builder: (context) => const LibraryScreen(),
                       ),
                     );
                   },
