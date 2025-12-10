@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:fight_my_shadow/screens/moves_screen.dart';
 
 void main() {
   runApp(const FightMyShadowApp());
@@ -68,6 +70,23 @@ class FightMyShadowApp extends StatelessWidget {
       ),
     );
   }
+}
+
+// Workout Configuration Model
+class WorkoutConfiguration {
+  final int rounds;
+  final int roundDurationSeconds;
+  final int restDurationSeconds;
+  final Difficulty difficulty;
+  final Intensity intensity;
+
+  WorkoutConfiguration({
+    required this.rounds,
+    required this.roundDurationSeconds,
+    required this.restDurationSeconds,
+    required this.difficulty,
+    required this.intensity,
+  });
 }
 
 class HomeScreen extends StatefulWidget {
@@ -160,21 +179,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'FIGHT MY SHADOW',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w800,
-                        ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'FIGHT MY SHADOW',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    Text(
+                      'Build your session',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              // View Moves button
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
                   ),
-                  Text(
-                    'Build your session',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.list_alt,
+                    color: Colors.white,
+                    size: 22,
                   ),
-                ],
+                  tooltip: 'View moves',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MovesScreen(),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -545,7 +592,21 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: Start workout functionality
+            // Create workout configuration and navigate
+            final config = WorkoutConfiguration(
+              rounds: rounds,
+              roundDurationSeconds: (roundMinutes * 60) + roundSeconds,
+              restDurationSeconds: (restMinutes * 60) + restSeconds,
+              difficulty: difficulty,
+              intensity: intensity,
+            );
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WorkoutScreen(config: config),
+              ),
+            );
           },
           borderRadius: BorderRadius.circular(16),
           child: Row(
@@ -563,6 +624,462 @@ class _HomeScreenState extends State<HomeScreen> {
                       letterSpacing: 1.5,
                       fontWeight: FontWeight.w800,
                     ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Workout Screen with Timer Logic
+class WorkoutScreen extends StatefulWidget {
+  final WorkoutConfiguration config;
+
+  const WorkoutScreen({super.key, required this.config});
+
+  @override
+  State<WorkoutScreen> createState() => _WorkoutScreenState();
+}
+
+enum WorkoutPhase { round, rest, complete }
+
+class _WorkoutScreenState extends State<WorkoutScreen> {
+  late int currentRound;
+  late WorkoutPhase currentPhase;
+  late int remainingSeconds;
+  late bool isPaused;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    currentRound = 1;
+    currentPhase = WorkoutPhase.round;
+    remainingSeconds = widget.config.roundDurationSeconds;
+    isPaused = false;
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!isPaused && mounted) {
+        setState(() {
+          if (remainingSeconds > 0) {
+            remainingSeconds--;
+          } else {
+            _handlePhaseTransition();
+          }
+        });
+      }
+    });
+  }
+
+  void _handlePhaseTransition() {
+    if (currentPhase == WorkoutPhase.round) {
+      // Just finished a round
+      if (currentRound < widget.config.rounds) {
+        // Move to rest phase
+        currentPhase = WorkoutPhase.rest;
+        remainingSeconds = widget.config.restDurationSeconds;
+      } else {
+        // Finished the last round
+        currentPhase = WorkoutPhase.complete;
+        _timer?.cancel();
+      }
+    } else if (currentPhase == WorkoutPhase.rest) {
+      // Just finished rest, move to next round
+      currentRound++;
+      currentPhase = WorkoutPhase.round;
+      remainingSeconds = widget.config.roundDurationSeconds;
+    }
+  }
+
+  void _togglePause() {
+    setState(() {
+      isPaused = !isPaused;
+    });
+  }
+
+  void _endWorkout() {
+    _timer?.cancel();
+    Navigator.pop(context);
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (currentPhase == WorkoutPhase.complete) {
+      return _buildCompleteScreen();
+    }
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(),
+              const SizedBox(height: 32),
+
+              // Main timer area
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Phase indicator
+                    _buildPhaseIndicator(),
+                    const SizedBox(height: 24),
+
+                    // Round info
+                    _buildRoundInfo(),
+                    const SizedBox(height: 32),
+
+                    // Timer
+                    _buildTimer(),
+                    const SizedBox(height: 48),
+
+                    // Configuration summary
+                    _buildConfigSummary(),
+                  ],
+                ),
+              ),
+
+              // Controls
+              _buildControls(),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.secondary,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.sports_martial_arts,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'WORKOUT IN PROGRESS',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhaseIndicator() {
+    final isRound = currentPhase == WorkoutPhase.round;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isRound
+              ? [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ]
+              : [
+                  Colors.blue.shade600,
+                  Colors.blue.shade400,
+                ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: (isRound
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.blue.shade600)
+                .withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Text(
+        isRound ? 'ROUND' : 'REST',
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 2,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoundInfo() {
+    return Text(
+      'Round $currentRound of ${widget.config.rounds}',
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Colors.white.withOpacity(0.7),
+          ),
+    );
+  }
+
+  Widget _buildTimer() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+          width: 2,
+        ),
+      ),
+      child: Text(
+        _formatTime(remainingSeconds),
+        style: TextStyle(
+          fontSize: 80,
+          fontWeight: FontWeight.w900,
+          color: Theme.of(context).colorScheme.primary,
+          letterSpacing: 4,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfigSummary() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text(
+              'CONFIGURATION',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildConfigItem(
+                  'Rounds',
+                  '${widget.config.rounds}',
+                ),
+                _buildConfigItem(
+                  'Round',
+                  _formatTime(widget.config.roundDurationSeconds),
+                ),
+                _buildConfigItem(
+                  'Rest',
+                  _formatTime(widget.config.restDurationSeconds),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildConfigItem(
+                  'Difficulty',
+                  widget.config.difficulty.label,
+                ),
+                _buildConfigItem(
+                  'Intensity',
+                  widget.config.intensity.label,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfigItem(String label, String value) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 10,
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControls() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildControlButton(
+            icon: isPaused ? Icons.play_arrow : Icons.pause,
+            label: isPaused ? 'RESUME' : 'PAUSE',
+            onTap: _togglePause,
+            isPrimary: false,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildControlButton(
+            icon: Icons.stop,
+            label: 'END',
+            onTap: _endWorkout,
+            isPrimary: true,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControlButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isPrimary,
+  }) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: isPrimary
+            ? LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+              )
+            : null,
+        color: isPrimary ? null : const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(12),
+        border: isPrimary
+            ? null
+            : Border.all(
+                color: Colors.white.withOpacity(0.1),
+              ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompleteScreen() {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.secondary,
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                      blurRadius: 30,
+                      spreadRadius: 10,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 80,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'WORKOUT COMPLETE!',
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      letterSpacing: 1.5,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'You completed ${widget.config.rounds} rounds',
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 48),
+              _buildControlButton(
+                icon: Icons.home,
+                label: 'BACK TO HOME',
+                onTap: _endWorkout,
+                isPrimary: true,
               ),
             ],
           ),
