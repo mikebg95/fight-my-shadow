@@ -31,13 +31,14 @@ extension MoveCategoryExtension on MoveCategory {
 ///   code: '1',
 ///   name: 'Left straight (jab)',
 ///   category: MoveCategory.punch,
+///   description: 'A quick, straight punch with the lead hand...',
 /// );
 /// ```
 class Move {
-  /// Unique stable identifier for this move (1-21)
+  /// Unique stable identifier for this move (1-23)
   final int id;
 
-  /// Short code used in numeric combinations (e.g., "1", "2", "3")
+  /// Short code used in numeric combinations (e.g., "1", "2", "F", "S")
   final String code;
 
   /// Full human-readable name (e.g., "Left straight (jab)")
@@ -46,11 +47,23 @@ class Move {
   /// The category/type of this move
   final MoveCategory category;
 
+  /// Detailed description explaining what the move is and how to execute it
+  final String? description;
+
+  /// Key coaching tips, cues, or common mistakes to avoid
+  final List<String>? tips;
+
+  /// Optional path to an asset image or animation (e.g., 'assets/moves/jab.gif')
+  final String? assetPath;
+
   const Move({
     required this.id,
     required this.code,
     required this.name,
     required this.category,
+    this.description,
+    this.tips,
+    this.assetPath,
   });
 
   /// Creates a copy of this move with the given fields replaced
@@ -61,12 +74,18 @@ class Move {
     String? code,
     String? name,
     MoveCategory? category,
+    String? description,
+    List<String>? tips,
+    String? assetPath,
   }) {
     return Move(
       id: id ?? this.id,
       code: code ?? this.code,
       name: name ?? this.name,
       category: category ?? this.category,
+      description: description ?? this.description,
+      tips: tips ?? this.tips,
+      assetPath: assetPath ?? this.assetPath,
     );
   }
 

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
+import 'package:fight_my_shadow/screens/welcome_screen.dart';
+import 'package:fight_my_shadow/models/training_discipline.dart';
 
 void main() {
   runApp(const FightMyShadowApp());
@@ -15,7 +17,7 @@ class FightMyShadowApp extends StatelessWidget {
       title: 'Fight My Shadow',
       debugShowCheckedModeBanner: false,
       theme: _buildAppTheme(),
-      home: const HomeScreen(),
+      home: const WelcomeScreen(),
     );
   }
 
@@ -90,7 +92,9 @@ class WorkoutConfiguration {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final TrainingDiscipline? discipline;
+
+  const HomeScreen({super.key, this.discipline});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -191,7 +195,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                     ),
                     Text(
-                      'Build your session',
+                      widget.discipline != null
+                          ? '${widget.discipline!.label} Training'
+                          : 'Build your session',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
