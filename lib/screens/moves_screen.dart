@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
+import 'package:fight_my_shadow/screens/move_detail_screen.dart';
 
 /// Screen that displays all available moves grouped by category.
 ///
@@ -44,17 +45,26 @@ class MovesScreen extends StatelessWidget {
                 children: [
                   // Punches section
                   _buildSectionHeader(context, 'Punches', punches.length),
-                  ...punches.map((move) => _MoveListItem(move: move)),
+                  ...punches.map((move) => _MoveListItem(
+                        move: move,
+                        onTap: () => _navigateToDetail(context, move),
+                      )),
                   const SizedBox(height: 16),
 
                   // Defense section
                   _buildSectionHeader(context, 'Defense', defense.length),
-                  ...defense.map((move) => _MoveListItem(move: move)),
+                  ...defense.map((move) => _MoveListItem(
+                        move: move,
+                        onTap: () => _navigateToDetail(context, move),
+                      )),
                   const SizedBox(height: 16),
 
                   // Footwork section
                   _buildSectionHeader(context, 'Footwork', footwork.length),
-                  ...footwork.map((move) => _MoveListItem(move: move)),
+                  ...footwork.map((move) => _MoveListItem(
+                        move: move,
+                        onTap: () => _navigateToDetail(context, move),
+                      )),
                 ],
               ),
             ),
@@ -131,6 +141,15 @@ class MovesScreen extends StatelessWidget {
     );
   }
 
+  void _navigateToDetail(BuildContext context, Move move) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MoveDetailScreen(move: move),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(BuildContext context, String title, int count) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 12),
@@ -172,47 +191,58 @@ class MovesScreen extends StatelessWidget {
 /// Displays move code, name, and category in a styled card.
 class _MoveListItem extends StatelessWidget {
   final Move move;
+  final VoidCallback onTap;
 
-  const _MoveListItem({required this.move});
+  const _MoveListItem({required this.move, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.05),
-          width: 1,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.05),
+            width: 1,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Code badge
-            _buildCodeBadge(context),
-            const SizedBox(width: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Code badge
+              _buildCodeBadge(context),
+              const SizedBox(width: 16),
 
-            // Name and category
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    move.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  _buildCategoryChip(context),
-                ],
+              // Name and category
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      move.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    _buildCategoryChip(context),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              // Chevron indicator
+              Icon(
+                Icons.chevron_right,
+                color: Colors.white.withOpacity(0.3),
+                size: 24,
+              ),
+            ],
+          ),
         ),
       ),
     );
