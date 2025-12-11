@@ -6,6 +6,8 @@ import 'package:fight_my_shadow/models/training_discipline.dart';
 import 'package:fight_my_shadow/domain/combos/combo.dart';
 import 'package:fight_my_shadow/domain/combos/boxing_combo_generator.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
+import 'package:fight_my_shadow/services/voice_coach_service.dart';
+import 'package:fight_my_shadow/controllers/workout_voice_controller.dart';
 
 void main() {
   runApp(const FightMyShadowApp());
@@ -684,6 +686,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   double _comboPhaseRemainingSeconds = 0.0;
   Combo? _previousCombo;
 
+  // Voice coaching
+  late WorkoutVoiceController _voiceController;
+
   @override
   void initState() {
     super.initState();
@@ -696,6 +701,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _moveRepository = InMemoryMoveRepository();
     _comboGenerator = BoxingComboGenerator(_moveRepository);
 
+    // Initialize voice coaching
+    final voiceService = VoiceCoachService();
+    _voiceController = WorkoutVoiceController(voiceService);
+
     _startTimer();
     _startNewComboIfNeeded();
   }
@@ -703,6 +712,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _voiceController.dispose();
     super.dispose();
   }
 
@@ -723,6 +733,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             _updateComboPhase(1.0); // 1 second elapsed
           }
         });
+
+        // Update voice controller with current workout state
+        _voiceController.update(
+          currentCombo: _currentCombo,
+          comboPhase: _comboPhase,
+          workoutPhase: currentPhase,
+          isPaused: isPaused,
+        );
       }
     });
   }
@@ -757,10 +775,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     setState(() {
       isPaused = !isPaused;
     });
+
+    // Update voice controller immediately when pause state changes
+    _voiceController.update(
+      currentCombo: _currentCombo,
+      comboPhase: _comboPhase,
+      workoutPhase: currentPhase,
+      isPaused: isPaused,
+    );
   }
 
   void _endWorkout() {
     _timer?.cancel();
+    _voiceController.stop();
     _clearCombo();
     _previousCombo = null;
     Navigator.pop(context);
