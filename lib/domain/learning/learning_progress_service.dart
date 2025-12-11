@@ -148,21 +148,40 @@ class LearningProgressService {
   /// Initializes a fresh LearningState for a new user.
   ///
   /// Creates progress entries for all 18 moves:
-  /// - Move 1 (Jab) is unlocked and ready to start
-  /// - Moves 2-18 are locked
+  /// - All moves start locked (isUnlocked = false)
+  /// - Current move (first not-unlocked) will be Move 1 (Jab)
+  /// - Jab will show as "Ready to Unlock", not "Unlocked"
   static LearningState initializeFreshState() {
     final allMoves = LearningPath.getAllMoves();
 
+    // All moves start completely locked - no special cases
     final progressList = allMoves.map((move) {
-      // First move (Jab) starts unlocked
-      if (move.id == 1) {
-        return LearningMoveProgress.initial(move.id).copyWith(isUnlocked: true);
-      }
-
-      // All other moves start locked
       return LearningMoveProgress.initial(move.id);
     }).toList();
 
     return LearningState(moveProgress: progressList);
+  }
+
+  /// Unlocks a specific learning move by ID.
+  ///
+  /// This is a simple unlock operation that marks the move as unlocked
+  /// and complete (drillDone, progressionSessions, examPassed all set to true).
+  /// Used for the instant-unlock button on Move Detail screen.
+  static LearningState unlockMove(LearningState state, int moveId) {
+    final progress = state.getProgressForMove(moveId);
+    if (progress == null) return state;
+
+    // Mark move as fully unlocked and complete
+    final unlockedProgress = progress.copyWith(
+      isUnlocked: true,
+      drillDone: true,
+      examPassed: true,
+      // Set progression sessions to the required amount for this move's phase
+      progressionSessionsDone: getRequiredProgressionSessions(
+        LearningPath.getMoveById(moveId)?.phase ?? 1,
+      ),
+    );
+
+    return state.updateMoveProgress(moveId, unlockedProgress);
   }
 }

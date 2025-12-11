@@ -1,45 +1,35 @@
+import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/domain/learning/learning_state.dart';
 
-/// Result of checking a move's lock status.
-class MoveLockStatus {
-  /// Whether the move is unlocked (accessible to the user).
-  final bool isUnlocked;
+/// Visual state of a move in the UI.
+enum MoveUnlockState {
+  /// Move has been fully unlocked by Story Mode.
+  unlocked,
 
-  /// Whether the move is part of the learning path.
-  final bool isInLearningPath;
+  /// Move is the current learning move - ready to be unlocked next.
+  readyToUnlock,
 
-  const MoveLockStatus({
-    required this.isUnlocked,
-    required this.isInLearningPath,
-  });
-
-  /// Creates a locked status (default state).
-  const MoveLockStatus.locked()
-      : isUnlocked = false,
-        isInLearningPath = false;
-
-  /// Creates an unlocked status.
-  const MoveLockStatus.unlocked({this.isInLearningPath = true})
-      : isUnlocked = true;
+  /// Move is locked and comes after the current move.
+  locked,
 }
 
-/// Service that determines whether a move is locked or unlocked based on
-/// Story Mode learning progress.
+/// Service that determines the unlock state of a move based on Story Mode progress.
 ///
-/// Uses LearningPath and LearningState to decide:
-/// - If a move's code appears in any LearningMove's moveCodes
-/// - If that LearningMove has been unlocked (isUnlocked = true)
-///
-/// By default, all moves are locked until Story Mode unlocks them.
+/// Returns one of three visual states:
+/// - Unlocked: Move has been fully unlocked
+/// - ReadyToUnlock: Move is the current learning move (next to unlock)
+/// - Locked: Move comes after the current move
 class MoveLockStatusResolver {
-  /// Determines the lock status of a move by its code.
+  /// Determines the visual unlock state of a move by its code.
   ///
-  /// Returns:
-  /// - isUnlocked = true if the move is part of a LearningMove that has been unlocked
-  /// - isUnlocked = false otherwise (default locked state)
-  /// - isInLearningPath = true if the move code appears in any LearningMove
-  static MoveLockStatus getStatus(String moveCode, LearningState learningState) {
+  /// Takes the current learning move into account to show which move
+  /// is "ready to unlock" (the next one in the progression).
+  static MoveUnlockState getUnlockState(
+    String moveCode,
+    LearningState learningState,
+    LearningMove? currentMove,
+  ) {
     // Get all learning moves
     final allLearningMoves = LearningPath.getAllMoves();
 
@@ -47,30 +37,40 @@ class MoveLockStatusResolver {
     for (final learningMove in allLearningMoves) {
       if (learningMove.moveCodes.contains(moveCode)) {
         // This move is part of the learning path
-        // Check if the LearningMove is unlocked
         final progress = learningState.getProgressForMove(learningMove.id);
 
         if (progress != null && progress.isUnlocked) {
-          // The learning move is unlocked, so this move is unlocked
-          return const MoveLockStatus.unlocked(isInLearningPath: true);
+          // The learning move is unlocked
+          return MoveUnlockState.unlocked;
         }
 
-        // Found in learning path but not yet unlocked
-        return const MoveLockStatus(
-          isUnlocked: false,
-          isInLearningPath: true,
-        );
+        // Check if this is the current learning move (ready to unlock)
+        if (currentMove != null && currentMove.id == learningMove.id) {
+          return MoveUnlockState.readyToUnlock;
+        }
+
+        // Not unlocked and not current - it's locked
+        return MoveUnlockState.locked;
       }
     }
 
-    // Not found in any learning move - treat as locked and not in learning path
-    // (In the future, we might have moves that are "free" and not part of Story Mode,
-    // but for now everything is locked by default)
-    return const MoveLockStatus.locked();
+    // Not found in any learning move - treat as locked
+    return MoveUnlockState.locked;
   }
 
   /// Convenience method to check if a move is unlocked (simple boolean).
+  /// Deprecated - use getUnlockState for full state information.
+  @Deprecated('Use getUnlockState instead for three-state support')
   static bool isUnlocked(String moveCode, LearningState learningState) {
-    return getStatus(moveCode, learningState).isUnlocked;
+    final allLearningMoves = LearningPath.getAllMoves();
+
+    for (final learningMove in allLearningMoves) {
+      if (learningMove.moveCodes.contains(moveCode)) {
+        final progress = learningState.getProgressForMove(learningMove.id);
+        return progress != null && progress.isUnlocked;
+      }
+    }
+
+    return false;
   }
 }

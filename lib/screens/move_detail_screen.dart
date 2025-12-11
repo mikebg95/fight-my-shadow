@@ -1,17 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/models/move.dart';
+import 'package:fight_my_shadow/domain/learning/learning_move.dart';
+import 'package:fight_my_shadow/domain/learning/learning_path.dart';
+import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
+import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 
 /// Screen that displays detailed information about a single move.
 ///
 /// Shows the move's name, code, category, discipline, description, tips,
 /// and a placeholder area for future images/animations.
+/// Also shows an UNLOCK button for moves that are ready to unlock.
 class MoveDetailScreen extends StatelessWidget {
   final Move move;
 
   const MoveDetailScreen({super.key, required this.move});
 
+  void _handleUnlock(BuildContext context) async {
+    // Find the LearningMove that corresponds to this Move
+    final allLearningMoves = LearningPath.getAllMoves();
+    LearningMove? targetLearningMove;
+
+    for (final learningMove in allLearningMoves) {
+      if (learningMove.moveCodes.contains(move.code)) {
+        targetLearningMove = learningMove;
+        break;
+      }
+    }
+
+    if (targetLearningMove == null) return;
+
+    // Get controller and unlock the move
+    final controller = context.read<StoryModeController>();
+    await controller.unlockMove(targetLearningMove.id);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Watch the controller for state changes
+    final controller = context.watch<StoryModeController>();
+    final learningState = controller.state;
+    final currentMove = learningState.currentMove;
+    final unlockState = MoveLockStatusResolver.getUnlockState(
+      move.code,
+      learningState,
+      currentMove,
+    );
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -25,6 +60,9 @@ class MoveDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Unlock status banner
+                    _buildUnlockStatusBanner(context, unlockState),
+
                     // Visual placeholder area
                     _buildVisualPlaceholder(context),
 
@@ -105,7 +143,7 @@ class MoveDetailScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -122,6 +160,150 @@ class MoveDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildUnlockStatusBanner(BuildContext context, MoveUnlockState unlockState) {
+    switch (unlockState) {
+      case MoveUnlockState.readyToUnlock:
+        // Show prominent UNLOCK button
+        return Container(
+          margin: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.secondary,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _handleUnlock(context),
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: const [
+                    Icon(
+                      Icons.lock_open,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'UNLOCK THIS MOVE',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Unlock to use in training and Story Mode',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+      case MoveUnlockState.unlocked:
+        // Show unlocked label
+        return Container(
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.green.shade400.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.green.shade400.withValues(alpha: 0.3),
+              width: 2,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green.shade400,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'UNLOCKED',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case MoveUnlockState.locked:
+        // Show subtle locked label
+        return Container(
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lock,
+                color: Colors.white.withValues(alpha: 0.5),
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'LOCKED',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withValues(alpha: 0.5),
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        );
+    }
   }
 
   Widget _buildVisualPlaceholder(BuildContext context) {

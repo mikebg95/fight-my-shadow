@@ -97,4 +97,26 @@ class LearningMoveProgress {
   @override
   String toString() =>
       'LearningMoveProgress(moveId: $moveId, drill: $drillDone, progression: $progressionSessionsDone, exam: $examPassed, unlocked: $isUnlocked)';
+
+  /// Converts this progress to a JSON map for persistence.
+  Map<String, dynamic> toJson() {
+    return {
+      'moveId': moveId,
+      'drillDone': drillDone,
+      'progressionSessionsDone': progressionSessionsDone,
+      'examPassed': examPassed,
+      'isUnlocked': isUnlocked,
+    };
+  }
+
+  /// Creates a LearningMoveProgress from a JSON map.
+  factory LearningMoveProgress.fromJson(Map<String, dynamic> json) {
+    return LearningMoveProgress(
+      moveId: json['moveId'] as int,
+      drillDone: json['drillDone'] as bool,
+      progressionSessionsDone: json['progressionSessionsDone'] as int,
+      examPassed: json['examPassed'] as bool,
+      isUnlocked: json['isUnlocked'] as bool,
+    );
+  }
 }

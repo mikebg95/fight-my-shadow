@@ -85,4 +85,20 @@ class LearningState {
            'learningComplete: $learningComplete, '
            'totalMoves: ${moveProgress.length})';
   }
+
+  /// Converts this state to a JSON map for persistence.
+  Map<String, dynamic> toJson() {
+    return {
+      'moveProgress': moveProgress.map((p) => p.toJson()).toList(),
+    };
+  }
+
+  /// Creates a LearningState from a JSON map.
+  factory LearningState.fromJson(Map<String, dynamic> json) {
+    final progressList = (json['moveProgress'] as List)
+        .map((item) => LearningMoveProgress.fromJson(item as Map<String, dynamic>))
+        .toList();
+
+    return LearningState(moveProgress: progressList);
+  }
 }

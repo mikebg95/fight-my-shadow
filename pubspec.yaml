@@ -39,6 +39,12 @@ dependencies:
   # Text-to-speech for voice coach
   flutter_tts: ^4.1.0
 
+  # Local persistence for Story Mode progress
+  shared_preferences: ^2.2.2
+
+  # State management for global controllers
+  provider: ^6.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

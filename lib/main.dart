@@ -1,28 +1,47 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
-import 'package:fight_my_shadow/screens/welcome_screen.dart';
+import 'package:fight_my_shadow/screens/discipline_selection_screen.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
 import 'package:fight_my_shadow/domain/combos/combo.dart';
 import 'package:fight_my_shadow/domain/combos/boxing_combo_generator.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/services/voice_coach_service.dart';
 import 'package:fight_my_shadow/controllers/workout_voice_controller.dart';
+import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/repositories/learning_progress_repository.dart';
 
-void main() {
-  runApp(const FightMyShadowApp());
+void main() async {
+  // Initialize Flutter bindings
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Story Mode controller with persistence
+  final repository = LearningProgressRepository();
+  final storyModeController = StoryModeController(repository);
+  await storyModeController.init();
+
+  runApp(FightMyShadowApp(storyModeController: storyModeController));
 }
 
 class FightMyShadowApp extends StatelessWidget {
-  const FightMyShadowApp({super.key});
+  final StoryModeController storyModeController;
+
+  const FightMyShadowApp({
+    super.key,
+    required this.storyModeController,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fight My Shadow',
-      debugShowCheckedModeBanner: false,
-      theme: _buildAppTheme(),
-      home: const WelcomeScreen(),
+    return ChangeNotifierProvider<StoryModeController>.value(
+      value: storyModeController,
+      child: MaterialApp(
+        title: 'Fight My Shadow',
+        debugShowCheckedModeBanner: false,
+        theme: _buildAppTheme(),
+        home: const DisciplineSelectionScreen(),
+      ),
     );
   }
 
@@ -146,95 +165,65 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFF0A0A0A),
-            const Color(0xFF0A0A0A).withOpacity(0.0),
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(20),
+      child: Row(
         children: [
-          // App logo/name with icon
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.secondary,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.sports_martial_arts,
-                  color: Colors.white,
-                  size: 28,
-                ),
+          // Back button
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'FIGHT MY SHADOW',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            letterSpacing: 1.2,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    Text(
-                      widget.discipline != null
-                          ? '${widget.discipline!.label} Training'
-                          : 'Build your session',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
-              // Library button
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A1A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.library_books,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                  tooltip: 'Library',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LibraryScreen(),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(width: 16),
+
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TRAINING',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.w800,
                       ),
-                    );
-                  },
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'Configure your workout',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                ),
+              ],
+            ),
+          ),
+
+          // Training icon
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
               ),
-            ],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.fitness_center,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
         ],
       ),

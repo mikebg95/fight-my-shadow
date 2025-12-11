@@ -1,36 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
-import 'package:fight_my_shadow/domain/learning/learning_state.dart';
-import 'package:fight_my_shadow/domain/learning/learning_progress_service.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
+import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 
 /// Screen that displays all available moves grouped by category.
 ///
 /// Shows Boxing moves organized into Punches, Defense, and Footwork sections.
 /// Locked moves (not yet unlocked in Story Mode) are displayed with a lock
 /// icon and greyed-out styling.
-class MovesScreen extends StatefulWidget {
+class MovesScreen extends StatelessWidget {
   const MovesScreen({super.key});
 
   @override
-  State<MovesScreen> createState() => _MovesScreenState();
-}
-
-class _MovesScreenState extends State<MovesScreen> {
-  late LearningState _learningState;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize learning state
-    // In future, this will load from persistence
-    _learningState = LearningProgressService.initializeFreshState();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Watch the controller for state changes
+    final controller = context.watch<StoryModeController>();
+    final learningState = controller.state;
+    final currentMove = learningState.currentMove;
+
     final repository = InMemoryMoveRepository();
 
     // Get moves by category
@@ -67,9 +57,10 @@ class _MovesScreenState extends State<MovesScreen> {
                   _buildSectionHeader(context, 'Punches', punches.length),
                   ...punches.map((move) => _MoveListItem(
                         move: move,
-                        isLocked: !MoveLockStatusResolver.isUnlocked(
+                        unlockState: MoveLockStatusResolver.getUnlockState(
                           move.code,
-                          _learningState,
+                          learningState,
+                          currentMove,
                         ),
                         onTap: () => _navigateToDetail(context, move),
                       )),
@@ -79,9 +70,10 @@ class _MovesScreenState extends State<MovesScreen> {
                   _buildSectionHeader(context, 'Defense', defense.length),
                   ...defense.map((move) => _MoveListItem(
                         move: move,
-                        isLocked: !MoveLockStatusResolver.isUnlocked(
+                        unlockState: MoveLockStatusResolver.getUnlockState(
                           move.code,
-                          _learningState,
+                          learningState,
+                          currentMove,
                         ),
                         onTap: () => _navigateToDetail(context, move),
                       )),
@@ -91,9 +83,10 @@ class _MovesScreenState extends State<MovesScreen> {
                   _buildSectionHeader(context, 'Footwork', footwork.length),
                   ...footwork.map((move) => _MoveListItem(
                         move: move,
-                        isLocked: !MoveLockStatusResolver.isUnlocked(
+                        unlockState: MoveLockStatusResolver.getUnlockState(
                           move.code,
-                          _learningState,
+                          learningState,
+                          currentMove,
                         ),
                         onTap: () => _navigateToDetail(context, move),
                       )),
@@ -221,22 +214,42 @@ class _MovesScreenState extends State<MovesScreen> {
 /// Individual move list item widget.
 ///
 /// Displays move code, name, and category in a styled card.
-/// Shows lock icon and greyed styling when move is locked.
+/// Shows different visual states: Unlocked, Ready to Unlock, or Locked.
 class _MoveListItem extends StatelessWidget {
   final Move move;
-  final bool isLocked;
+  final MoveUnlockState unlockState;
   final VoidCallback onTap;
 
   const _MoveListItem({
     required this.move,
-    required this.isLocked,
+    required this.unlockState,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Apply opacity to entire card when locked
+    // Determine visual properties based on unlock state
+    final isLocked = unlockState == MoveUnlockState.locked;
+    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlock;
+
+    // Card opacity
     final cardOpacity = isLocked ? 0.5 : 1.0;
+
+    // Border styling for ready-to-unlock state
+    final borderColor = isReadyToUnlock
+        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+        : isLocked
+            ? Colors.white.withValues(alpha: 0.02)
+            : Colors.white.withValues(alpha: 0.05);
+
+    final borderWidth = isReadyToUnlock ? 2.0 : 1.0;
+
+    // Background color
+    final backgroundColor = isReadyToUnlock
+        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
+        : isLocked
+            ? const Color(0xFF141414)
+            : const Color(0xFF1A1A1A);
 
     return GestureDetector(
       onTap: onTap,
@@ -245,16 +258,22 @@ class _MoveListItem extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: isLocked
-                ? const Color(0xFF141414) // Slightly darker when locked
-                : const Color(0xFF1A1A1A),
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withValues(
-                alpha: isLocked ? 0.02 : 0.05,
-              ),
-              width: 1,
+              color: borderColor,
+              width: borderWidth,
             ),
+            // Subtle glow for ready-to-unlock
+            boxShadow: isReadyToUnlock
+                ? [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -284,26 +303,8 @@ class _MoveListItem extends StatelessWidget {
                   ),
                 ),
 
-                // Lock icon or chevron indicator
-                if (isLocked)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.lock,
-                      color: Colors.white.withValues(alpha: 0.4),
-                      size: 20,
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.chevron_right,
-                    color: Colors.white.withValues(alpha: 0.3),
-                    size: 24,
-                  ),
+                // State indicator badge
+                _buildStateBadge(context),
               ],
             ),
           ),
@@ -312,7 +313,88 @@ class _MoveListItem extends StatelessWidget {
     );
   }
 
+  /// Builds the state badge (checkmark, unlock, or lock icon).
+  Widget _buildStateBadge(BuildContext context) {
+    switch (unlockState) {
+      case MoveUnlockState.unlocked:
+        // Green checkmark badge
+        return Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.green.shade400.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.check_circle,
+            color: Colors.green.shade400,
+            size: 24,
+          ),
+        );
+
+      case MoveUnlockState.readyToUnlock:
+        // Orange "Unlock" badge with key icon
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.secondary,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(
+                Icons.lock_open,
+                color: Colors.white,
+                size: 16,
+              ),
+              SizedBox(width: 6),
+              Text(
+                'UNLOCK',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case MoveUnlockState.locked:
+        // Grey lock icon
+        return Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.lock,
+            color: Colors.white.withValues(alpha: 0.4),
+            size: 20,
+          ),
+        );
+    }
+  }
+
   Widget _buildCodeBadge(BuildContext context) {
+    final isLocked = unlockState == MoveUnlockState.locked;
+    final isActive = unlockState == MoveUnlockState.unlocked ||
+                     unlockState == MoveUnlockState.readyToUnlock;
+
     return Container(
       width: 48,
       height: 48,
@@ -331,15 +413,15 @@ class _MoveListItem extends StatelessWidget {
                 ],
               ),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: isLocked
-            ? []
-            : [
+        boxShadow: isActive
+            ? [
                 BoxShadow(
                   color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
-              ],
+              ]
+            : [],
       ),
       child: Center(
         child: Text(
@@ -376,6 +458,7 @@ class _MoveListItem extends StatelessWidget {
     }
 
     // Mute the category color when locked
+    final isLocked = unlockState == MoveUnlockState.locked;
     final displayColor = isLocked
         ? Colors.grey.shade700
         : categoryColor;
