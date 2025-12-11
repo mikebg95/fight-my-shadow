@@ -2,12 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
+import 'package:fight_my_shadow/domain/learning/learning_state.dart';
+import 'package:fight_my_shadow/domain/learning/learning_progress_service.dart';
+import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 
 /// Screen that displays all available moves grouped by category.
 ///
 /// Shows Boxing moves organized into Punches, Defense, and Footwork sections.
-class MovesScreen extends StatelessWidget {
+/// Locked moves (not yet unlocked in Story Mode) are displayed with a lock
+/// icon and greyed-out styling.
+class MovesScreen extends StatefulWidget {
   const MovesScreen({super.key});
+
+  @override
+  State<MovesScreen> createState() => _MovesScreenState();
+}
+
+class _MovesScreenState extends State<MovesScreen> {
+  late LearningState _learningState;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize learning state
+    // In future, this will load from persistence
+    _learningState = LearningProgressService.initializeFreshState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +67,10 @@ class MovesScreen extends StatelessWidget {
                   _buildSectionHeader(context, 'Punches', punches.length),
                   ...punches.map((move) => _MoveListItem(
                         move: move,
+                        isLocked: !MoveLockStatusResolver.isUnlocked(
+                          move.code,
+                          _learningState,
+                        ),
                         onTap: () => _navigateToDetail(context, move),
                       )),
                   const SizedBox(height: 16),
@@ -55,6 +79,10 @@ class MovesScreen extends StatelessWidget {
                   _buildSectionHeader(context, 'Defense', defense.length),
                   ...defense.map((move) => _MoveListItem(
                         move: move,
+                        isLocked: !MoveLockStatusResolver.isUnlocked(
+                          move.code,
+                          _learningState,
+                        ),
                         onTap: () => _navigateToDetail(context, move),
                       )),
                   const SizedBox(height: 16),
@@ -63,6 +91,10 @@ class MovesScreen extends StatelessWidget {
                   _buildSectionHeader(context, 'Footwork', footwork.length),
                   ...footwork.map((move) => _MoveListItem(
                         move: move,
+                        isLocked: !MoveLockStatusResolver.isUnlocked(
+                          move.code,
+                          _learningState,
+                        ),
                         onTap: () => _navigateToDetail(context, move),
                       )),
                 ],
@@ -85,7 +117,7 @@ class MovesScreen extends StatelessWidget {
               color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
             child: IconButton(
@@ -111,7 +143,7 @@ class MovesScreen extends StatelessWidget {
                 Text(
                   '$moveCount moves total',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                       ),
                 ),
               ],
@@ -168,7 +200,7 @@ class MovesScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -189,59 +221,91 @@ class MovesScreen extends StatelessWidget {
 /// Individual move list item widget.
 ///
 /// Displays move code, name, and category in a styled card.
+/// Shows lock icon and greyed styling when move is locked.
 class _MoveListItem extends StatelessWidget {
   final Move move;
+  final bool isLocked;
   final VoidCallback onTap;
 
-  const _MoveListItem({required this.move, required this.onTap});
+  const _MoveListItem({
+    required this.move,
+    required this.isLocked,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Apply opacity to entire card when locked
+    final cardOpacity = isLocked ? 0.5 : 1.0;
+
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.05),
-            width: 1,
+      child: Opacity(
+        opacity: cardOpacity,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: isLocked
+                ? const Color(0xFF141414) // Slightly darker when locked
+                : const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withValues(
+                alpha: isLocked ? 0.02 : 0.05,
+              ),
+              width: 1,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Code badge
-              _buildCodeBadge(context),
-              const SizedBox(width: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Code badge
+                _buildCodeBadge(context),
+                const SizedBox(width: 16),
 
-              // Name and category
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      move.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                    ),
-                    const SizedBox(height: 6),
-                    _buildCategoryChip(context),
-                  ],
+                // Name and category
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        move.name,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: isLocked
+                                  ? Colors.white.withValues(alpha: 0.4)
+                                  : Colors.white,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      _buildCategoryChip(context),
+                    ],
+                  ),
                 ),
-              ),
 
-              // Chevron indicator
-              Icon(
-                Icons.chevron_right,
-                color: Colors.white.withOpacity(0.3),
-                size: 24,
-              ),
-            ],
+                // Lock icon or chevron indicator
+                if (isLocked)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.lock,
+                      color: Colors.white.withValues(alpha: 0.4),
+                      size: 20,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right,
+                    color: Colors.white.withValues(alpha: 0.3),
+                    size: 24,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -253,28 +317,39 @@ class _MoveListItem extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary,
-          ],
-        ),
+        gradient: isLocked
+            ? LinearGradient(
+                colors: [
+                  Colors.grey.shade800,
+                  Colors.grey.shade700,
+                ],
+              )
+            : LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+              ),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isLocked
+            ? []
+            : [
+                BoxShadow(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Center(
         child: Text(
           move.code,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
-            color: Colors.white,
+            color: isLocked
+                ? Colors.white.withValues(alpha: 0.4)
+                : Colors.white,
           ),
         ),
       ),
@@ -300,13 +375,18 @@ class _MoveListItem extends StatelessWidget {
         break;
     }
 
+    // Mute the category color when locked
+    final displayColor = isLocked
+        ? Colors.grey.shade700
+        : categoryColor;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.2),
+        color: displayColor.withValues(alpha: isLocked ? 0.15 : 0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: categoryColor.withOpacity(0.3),
+          color: displayColor.withValues(alpha: isLocked ? 0.2 : 0.3),
           width: 1,
         ),
       ),
@@ -316,7 +396,9 @@ class _MoveListItem extends StatelessWidget {
           Icon(
             categoryIcon,
             size: 14,
-            color: categoryColor,
+            color: isLocked
+                ? displayColor.withValues(alpha: 0.6)
+                : displayColor,
           ),
           const SizedBox(width: 6),
           Text(
@@ -324,7 +406,9 @@ class _MoveListItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: categoryColor,
+              color: isLocked
+                  ? displayColor.withValues(alpha: 0.6)
+                  : displayColor,
               letterSpacing: 0.5,
             ),
           ),
