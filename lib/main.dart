@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
 import 'package:fight_my_shadow/screens/welcome_screen.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
+import 'package:fight_my_shadow/domain/combos/combo.dart';
+import 'package:fight_my_shadow/domain/combos/boxing_combo_generator.dart';
+import 'package:fight_my_shadow/repositories/move_repository.dart';
 
 void main() {
   runApp(const FightMyShadowApp());
@@ -651,12 +654,34 @@ class WorkoutScreen extends StatefulWidget {
 
 enum WorkoutPhase { round, rest, complete }
 
+/// Represents the phase of a combo cycle during a round.
+enum ComboPhase {
+  /// No combo is active (idle state between combos or during rest).
+  idle,
+
+  /// Combo is being announced (voice will call out the combo in future step).
+  announce,
+
+  /// User is executing the combo.
+  execute,
+
+  /// Recovery phase after combo execution (breathing/resetting).
+  recover,
+}
+
 class _WorkoutScreenState extends State<WorkoutScreen> {
   late int currentRound;
   late WorkoutPhase currentPhase;
   late int remainingSeconds;
   late bool isPaused;
   Timer? _timer;
+
+  // Combo-related state
+  late BoxingComboGenerator _comboGenerator;
+  Combo? _currentCombo;
+  ComboPhase _comboPhase = ComboPhase.idle;
+  double _comboPhaseRemainingSeconds = 0.0;
+  Combo? _previousCombo;
 
   @override
   void initState() {
@@ -665,7 +690,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     currentPhase = WorkoutPhase.round;
     remainingSeconds = widget.config.roundDurationSeconds;
     isPaused = false;
+
+    // Initialize combo generator
+    final repository = InMemoryMoveRepository();
+    _comboGenerator = BoxingComboGenerator(repository);
+
     _startTimer();
+    _startNewComboIfNeeded();
   }
 
   @override
@@ -679,10 +710,16 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isPaused && mounted) {
         setState(() {
+          // Update round timer
           if (remainingSeconds > 0) {
             remainingSeconds--;
           } else {
             _handlePhaseTransition();
+          }
+
+          // Update combo phase during active rounds
+          if (currentPhase == WorkoutPhase.round) {
+            _updateComboPhase(1.0); // 1 second elapsed
           }
         });
       }
@@ -691,7 +728,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   void _handlePhaseTransition() {
     if (currentPhase == WorkoutPhase.round) {
-      // Just finished a round
+      // Just finished a round - clear combo state
+      _clearCombo();
+      _previousCombo = null;
+
       if (currentRound < widget.config.rounds) {
         // Move to rest phase
         currentPhase = WorkoutPhase.rest;
@@ -706,6 +746,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       currentRound++;
       currentPhase = WorkoutPhase.round;
       remainingSeconds = widget.config.roundDurationSeconds;
+
+      // Start combo cycles for the new round
+      _startNewComboIfNeeded();
     }
   }
 
@@ -717,6 +760,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   void _endWorkout() {
     _timer?.cancel();
+    _clearCombo();
+    _previousCombo = null;
     Navigator.pop(context);
   }
 
@@ -724,6 +769,148 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  // ========== Combo Management Methods ==========
+
+  /// Calculates the announce phase duration based on combo length.
+  /// Base duration + per-move duration.
+  double _calculateAnnounceDuration(Combo combo) {
+    const baseSeconds = 1.0;
+    const secondsPerMove = 0.3;
+    return baseSeconds + (combo.moveCodes.length * secondsPerMove);
+  }
+
+  /// Calculates the execution phase duration based on difficulty and combo length.
+  double _calculateExecutionDuration(Combo combo) {
+    // Time per move varies with difficulty
+    double secondsPerMove;
+    switch (widget.config.difficulty) {
+      case Difficulty.beginner:
+        secondsPerMove = 2.0; // Slower, more time per move
+        break;
+      case Difficulty.intermediate:
+        secondsPerMove = 1.5;
+        break;
+      case Difficulty.advanced:
+        secondsPerMove = 1.2; // Faster execution
+        break;
+    }
+
+    // Slightly adjust for intensity (higher intensity = slightly faster)
+    switch (widget.config.intensity) {
+      case Intensity.low:
+        secondsPerMove *= 1.1;
+        break;
+      case Intensity.medium:
+        // no adjustment
+        break;
+      case Intensity.high:
+        secondsPerMove *= 0.9;
+        break;
+    }
+
+    return combo.moveCodes.length * secondsPerMove;
+  }
+
+  /// Calculates the recovery phase duration based on intensity.
+  double _calculateRecoveryDuration() {
+    switch (widget.config.intensity) {
+      case Intensity.low:
+        return 4.0; // Longer recovery for low intensity
+      case Intensity.medium:
+        return 2.5;
+      case Intensity.high:
+        return 1.5; // Short recovery for high intensity
+    }
+  }
+
+  /// Checks if there is enough time remaining in the round to start a new combo.
+  bool _hasEnoughTimeForNewCombo() {
+    if (currentPhase != WorkoutPhase.round) {
+      return false;
+    }
+
+    // Need at least a minimum cycle time (estimate for a short combo)
+    const minCycleTime = 5.0; // Conservative minimum
+    return remainingSeconds >= minCycleTime;
+  }
+
+  /// Starts a new combo cycle if conditions are right.
+  void _startNewComboIfNeeded() {
+    // Only start combos during active rounds
+    if (currentPhase != WorkoutPhase.round) {
+      return;
+    }
+
+    // Check if we have enough time
+    if (!_hasEnoughTimeForNewCombo()) {
+      _clearCombo();
+      return;
+    }
+
+    // Generate a new combo
+    final newCombo = _comboGenerator.generateCombo(
+      difficulty: widget.config.difficulty,
+      previousCombo: _previousCombo,
+    );
+
+    // Start the announce phase
+    _currentCombo = newCombo;
+    _comboPhase = ComboPhase.announce;
+    _comboPhaseRemainingSeconds = _calculateAnnounceDuration(newCombo);
+  }
+
+  /// Updates the combo phase based on elapsed time.
+  void _updateComboPhase(double elapsedSeconds) {
+    if (_comboPhase == ComboPhase.idle || _currentCombo == null) {
+      return;
+    }
+
+    _comboPhaseRemainingSeconds -= elapsedSeconds;
+
+    if (_comboPhaseRemainingSeconds <= 0) {
+      _transitionComboPhase();
+    }
+  }
+
+  /// Transitions to the next combo phase.
+  void _transitionComboPhase() {
+    if (_currentCombo == null) {
+      return;
+    }
+
+    switch (_comboPhase) {
+      case ComboPhase.announce:
+        // Move to execution
+        _comboPhase = ComboPhase.execute;
+        _comboPhaseRemainingSeconds = _calculateExecutionDuration(_currentCombo!);
+        break;
+
+      case ComboPhase.execute:
+        // Move to recovery
+        _comboPhase = ComboPhase.recover;
+        _comboPhaseRemainingSeconds = _calculateRecoveryDuration();
+        break;
+
+      case ComboPhase.recover:
+        // Combo cycle complete, prepare for next combo
+        _previousCombo = _currentCombo;
+        _clearCombo();
+        _startNewComboIfNeeded();
+        break;
+
+      case ComboPhase.idle:
+        // Should not reach here
+        break;
+    }
+  }
+
+  /// Clears the current combo state.
+  void _clearCombo() {
+    _currentCombo = null;
+    _comboPhase = ComboPhase.idle;
+    _comboPhaseRemainingSeconds = 0.0;
   }
 
   @override
