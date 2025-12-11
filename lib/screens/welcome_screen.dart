@@ -29,7 +29,7 @@ class WelcomeScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 24),
-                    _buildStoryModeButton(context),
+                    _buildAcademyButton(context),
                     const SizedBox(height: 32),
                     _buildSportGrid(context),
                     const SizedBox(height: 32),
@@ -137,7 +137,7 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStoryModeButton(BuildContext context) {
+  Widget _buildAcademyButton(BuildContext context) {
     return Container(
       width: double.infinity,
       height: 72,
@@ -192,7 +192,7 @@ class WelcomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'STORY MODE',
+                        'ACADEMY',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.2,

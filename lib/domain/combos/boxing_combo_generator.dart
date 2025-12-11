@@ -229,6 +229,9 @@ class BoxingComboGenerator implements ComboGenerator {
       case MoveCategory.footwork:
         moves = _repository.getAllFootwork();
         break;
+      case MoveCategory.deception:
+        moves = _repository.getMovesByCategory(MoveCategory.deception);
+        break;
     }
 
     if (moves.isEmpty) {

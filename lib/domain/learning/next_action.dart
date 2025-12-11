@@ -1,10 +1,10 @@
-/// Represents the next action a user should take in Story Mode learning.
+/// Represents the next action a user should take in Academy learning.
 ///
 /// The progression flow is:
 /// 1. Drill - Learn the move with guided practice
-/// 2. Progression - Practice the move multiple times (1-3 sessions based on phase)
+/// 2. Progression - Practice the move multiple times (1-3 sessions based on level)
 /// 3. Exam - Test mastery of the move
-/// 4. LearningComplete - All 18 moves have been unlocked
+/// 4. LearningComplete - All 38 moves have been unlocked
 enum NextActionType {
   drill,
   progression,

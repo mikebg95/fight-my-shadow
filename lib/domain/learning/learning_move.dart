@@ -15,24 +15,30 @@
 /// This model is purely about curriculum definition and does not track
 /// user progress or unlock status.
 class LearningMove {
-  /// Unique identifier (1-18) representing the unlock order.
+  /// Unique identifier (1-40) representing the unlock order.
   final int id;
 
-  /// Phase index (1-6) representing the learning phase this move belongs to.
+  /// Level index (1-12) representing the learning level this move belongs to.
   ///
-  /// Phases:
-  /// - 1: Basics
-  /// - 2: Basic angles
-  /// - 3: Defense
-  /// - 4: Intermediate punches
-  /// - 5: Advanced footwork
-  /// - 6: Extras
-  final int phase;
+  /// Levels:
+  /// - 1: Foundation Fists
+  /// - 2: Rails & Shields
+  /// - 3: Hook City
+  /// - 4: Turn the Corner
+  /// - 5: Uppercut Engine
+  /// - 6: Slipstream
+  /// - 7: Wave & Fade
+  /// - 8: Shield Wall
+  /// - 9: Deception Arts
+  /// - 10: Footwork Fury
+  /// - 11: Body Hunters
+  /// - 12: Shadow Weapons
+  final int level;
 
-  /// Order index within the phase (0-based).
+  /// Order index within the level (0-based).
   ///
-  /// Used for UI grouping and display ordering within each phase.
-  final int orderInPhase;
+  /// Used for UI grouping and display ordering within each level.
+  final int orderInLevel;
 
   /// User-facing display name.
   ///
@@ -54,28 +60,40 @@ class LearningMove {
 
   const LearningMove({
     required this.id,
-    required this.phase,
-    required this.orderInPhase,
+    required this.level,
+    required this.orderInLevel,
     required this.displayName,
     required this.description,
     required this.moveCodes,
   });
 
-  /// Returns the phase name as a string.
-  String get phaseName {
-    switch (phase) {
+  /// Returns the level name as a string.
+  String get levelName {
+    switch (level) {
       case 1:
-        return 'Basics';
+        return 'Foundation Fists';
       case 2:
-        return 'Basic angles';
+        return 'Rails & Shields';
       case 3:
-        return 'Defense';
+        return 'Hook City';
       case 4:
-        return 'Intermediate punches';
+        return 'Turn the Corner';
       case 5:
-        return 'Advanced footwork';
+        return 'Uppercut Engine';
       case 6:
-        return 'Extras';
+        return 'Slipstream';
+      case 7:
+        return 'Wave & Fade';
+      case 8:
+        return 'Shield Wall';
+      case 9:
+        return 'Deception Arts';
+      case 10:
+        return 'Footwork Fury';
+      case 11:
+        return 'Body Hunters';
+      case 12:
+        return 'Shadow Weapons';
       default:
         return 'Unknown';
     }
@@ -93,5 +111,5 @@ class LearningMove {
 
   @override
   String toString() =>
-      'LearningMove(id: $id, phase: $phase, name: "$displayName")';
+      'LearningMove(id: $id, level: $level, name: "$displayName")';
 }

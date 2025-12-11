@@ -5,11 +5,13 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/data/boxing_moves_data.dart';
 
-/// Screen that displays all available moves grouped by category.
+/// Library screen that displays all available moves grouped by category.
 ///
-/// Shows Boxing moves organized into Punches, Defense, and Footwork sections.
-/// Locked moves (not yet unlocked in Story Mode) are displayed with a lock
+/// Shows Boxing moves organized into Punches, Defense, Footwork, and Deception sections.
+/// Moves are ordered according to the Academy learning path.
+/// Locked moves (not yet unlocked in Academy) are displayed with a lock
 /// icon and greyed-out styling.
 class MovesScreen extends StatelessWidget {
   const MovesScreen({super.key});
@@ -23,21 +25,14 @@ class MovesScreen extends StatelessWidget {
 
     final repository = InMemoryMoveRepository();
 
-    // Get moves by category
-    final punches = repository.getMovesByCategory(MoveCategory.punch);
-    final defense = repository.getMovesByCategory(MoveCategory.defense);
-    final footwork = repository.getMovesByCategory(MoveCategory.footwork);
+    // Get all moves in Academy order
+    final allMovesOrdered = getMovesInAcademyOrder();
 
-    // Sort punches numerically by code (1, 2, 3, ..., 14)
-    punches.sort((a, b) {
-      final aNum = int.tryParse(a.code) ?? 999;
-      final bNum = int.tryParse(b.code) ?? 999;
-      return aNum.compareTo(bNum);
-    });
-
-    // Sort defense and footwork alphabetically by code
-    defense.sort((a, b) => a.code.compareTo(b.code));
-    footwork.sort((a, b) => a.code.compareTo(b.code));
+    // Group by category while preserving Academy order within each category
+    final punches = allMovesOrdered.where((m) => m.category == MoveCategory.punch).toList();
+    final defense = allMovesOrdered.where((m) => m.category == MoveCategory.defense).toList();
+    final footwork = allMovesOrdered.where((m) => m.category == MoveCategory.footwork).toList();
+    final deception = allMovesOrdered.where((m) => m.category == MoveCategory.deception).toList();
 
     final totalMoves = repository.totalMoves;
 
@@ -82,6 +77,19 @@ class MovesScreen extends StatelessWidget {
                   // Footwork section
                   _buildSectionHeader(context, 'Footwork', footwork.length),
                   ...footwork.map((move) => _MoveListItem(
+                        move: move,
+                        unlockState: MoveLockStatusResolver.getUnlockState(
+                          move.code,
+                          learningState,
+                          currentMove,
+                        ),
+                        onTap: () => _navigateToDetail(context, move),
+                      )),
+                  const SizedBox(height: 16),
+
+                  // Deception section
+                  _buildSectionHeader(context, 'Deception', deception.length),
+                  ...deception.map((move) => _MoveListItem(
                         move: move,
                         unlockState: MoveLockStatusResolver.getUnlockState(
                           move.code,
@@ -454,6 +462,10 @@ class _MoveListItem extends StatelessWidget {
       case MoveCategory.footwork:
         categoryColor = Colors.purple.shade700;
         categoryIcon = Icons.directions_walk;
+        break;
+      case MoveCategory.deception:
+        categoryColor = Colors.amber.shade700;
+        categoryIcon = Icons.swap_horiz;
         break;
     }
 

@@ -16,7 +16,7 @@ void main() async {
   // Initialize Flutter bindings
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Story Mode controller with persistence
+  // Initialize Academy controller with persistence
   final repository = LearningProgressRepository();
   final storyModeController = StoryModeController(repository);
   await storyModeController.init();

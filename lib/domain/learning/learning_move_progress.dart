@@ -8,7 +8,7 @@
 /// When all three stages are complete, the move is unlocked and the user
 /// advances to the next move in the learning path.
 class LearningMoveProgress {
-  /// The ID of the LearningMove this progress refers to (1-18).
+  /// The ID of the LearningMove this progress refers to (1-38).
   final int moveId;
 
   /// Whether the Drill session for this move has been completed.
@@ -19,7 +19,7 @@ class LearningMoveProgress {
   /// Number of Progression sessions completed for this move.
   ///
   /// Progression sessions apply the move in realistic workout scenarios.
-  /// The required number varies by phase (see phase-based requirements).
+  /// The required number varies by level (see level-based requirements).
   final int progressionSessionsDone;
 
   /// Whether the Exam for this move has been passed.

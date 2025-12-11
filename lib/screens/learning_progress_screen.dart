@@ -9,11 +9,11 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 
-/// Story Mode home screen showing learning progress and next action.
+/// Academy home screen showing learning progress and next action.
 ///
 /// Displays:
 /// - Global progress bar showing unlocked moves
-/// - All learning moves grouped by phase (1-6), using actual Move objects from repository
+/// - All learning moves grouped by level (1-12), using actual Move objects from repository
 /// - Status for each move (Locked / Ready to Unlock / Unlocked) using same logic as Library
 /// - Large CTA button reflecting the next action (Drill/Progression/Exam/Complete)
 class LearningProgressScreen extends StatelessWidget {
@@ -48,8 +48,8 @@ class LearningProgressScreen extends StatelessWidget {
                     _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves),
                     const SizedBox(height: 24),
 
-                    // Moves list grouped by phase
-                    _buildMovesListByPhase(context, allLearningMoves, repository, learningState),
+                    // Moves list grouped by level
+                    _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
                   ],
                 ),
@@ -105,14 +105,14 @@ class LearningProgressScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'STORY MODE',
+                  'ACADEMY',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w800,
                       ),
                 ),
                 Text(
-                  'Learning Phase',
+                  'Progress Path',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -197,50 +197,50 @@ class LearningProgressScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMovesListByPhase(
+  Widget _buildMovesListByLevel(
     BuildContext context,
     List<LearningMove> allLearningMoves,
     MoveRepository repository,
     LearningState learningState,
   ) {
-    // Group learning moves by phase
-    final movesByPhase = <int, List<LearningMove>>{};
+    // Group learning moves by level
+    final movesByLevel = <int, List<LearningMove>>{};
     for (final learningMove in allLearningMoves) {
-      movesByPhase.putIfAbsent(learningMove.phase, () => []).add(learningMove);
+      movesByLevel.putIfAbsent(learningMove.level, () => []).add(learningMove);
     }
 
-    // Sort phases
-    final sortedPhases = movesByPhase.keys.toList()..sort();
+    // Sort levels
+    final sortedLevels = movesByLevel.keys.toList()..sort();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: sortedPhases.map((phase) {
-          final learningMoves = movesByPhase[phase]!;
-          // Sort moves by orderInPhase
-          learningMoves.sort((a, b) => a.orderInPhase.compareTo(b.orderInPhase));
+        children: sortedLevels.map((level) {
+          final learningMoves = movesByLevel[level]!;
+          // Sort moves by orderInLevel
+          learningMoves.sort((a, b) => a.orderInLevel.compareTo(b.orderInLevel));
 
-          return _buildPhaseSection(context, phase, learningMoves, repository, learningState);
+          return _buildLevelSection(context, level, learningMoves, repository, learningState);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildPhaseSection(
+  Widget _buildLevelSection(
     BuildContext context,
-    int phase,
+    int level,
     List<LearningMove> learningMoves,
     MoveRepository repository,
     LearningState learningState,
   ) {
-    // Get phase name from first move
-    final phaseName = learningMoves.first.phaseName;
+    // Get level name from first move
+    final levelName = learningMoves.first.levelName;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Phase header
+        // Level header
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
           child: Row(
@@ -260,7 +260,7 @@ class LearningProgressScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'PHASE $phase',
+                  'LEVEL $level',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -271,7 +271,7 @@ class LearningProgressScreen extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                phaseName,
+                levelName,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -280,7 +280,7 @@ class LearningProgressScreen extends StatelessWidget {
           ),
         ),
 
-        // Moves in this phase
+        // Moves in this level
         ...learningMoves.map((learningMove) =>
           _buildMoveRow(context, learningMove, repository, learningState)),
         const SizedBox(height: 16),
@@ -475,7 +475,7 @@ class LearningProgressScreen extends StatelessWidget {
 
         if (move != null && progress != null) {
           final required = LearningProgressService.getRequiredProgressionSessions(
-            move.phase,
+            move.level,
           );
           subtitleText =
               'Session ${progress.progressionSessionsDone + 1} of $required';
@@ -491,7 +491,7 @@ class LearningProgressScreen extends StatelessWidget {
       case NextActionType.learningComplete:
         buttonLabel = 'Continue to Training Mode';
         buttonIcon = Icons.play_arrow_rounded;
-        subtitleText = 'All moves unlocked! You\'ve completed the Learning Phase.';
+        subtitleText = 'All moves unlocked! You\'ve completed all levels.';
         break;
     }
 

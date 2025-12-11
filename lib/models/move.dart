@@ -27,6 +27,7 @@ enum MoveCategory {
   punch,
   defense,
   footwork,
+  deception,
 }
 
 /// Extension to get display-friendly labels for move categories
@@ -39,6 +40,8 @@ extension MoveCategoryExtension on MoveCategory {
         return 'Defense';
       case MoveCategory.footwork:
         return 'Footwork';
+      case MoveCategory.deception:
+        return 'Deception';
     }
   }
 }

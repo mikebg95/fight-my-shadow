@@ -6,7 +6,7 @@ import 'package:fight_my_shadow/models/training_discipline.dart';
 
 /// Boxing home screen - hub for all boxing-specific features.
 ///
-/// Contains navigation to Story Mode, Training, and Library.
+/// Contains navigation to Academy, Training Session, and Library.
 class BoxingHomeScreen extends StatelessWidget {
   const BoxingHomeScreen({super.key});
 
@@ -26,10 +26,10 @@ class BoxingHomeScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Story Mode option
+                  // Academy option
                   _buildOptionCard(
                     context,
-                    title: 'STORY MODE',
+                    title: 'ACADEMY',
                     subtitle: 'Learn moves step by step',
                     icon: Icons.school,
                     gradient: LinearGradient(
@@ -50,10 +50,10 @@ class BoxingHomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Training option
+                  // Training Session option
                   _buildOptionCard(
                     context,
-                    title: 'TRAINING',
+                    title: 'TRAINING SESSION',
                     subtitle: 'Create and start workouts',
                     icon: Icons.fitness_center,
                     gradient: LinearGradient(

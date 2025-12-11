@@ -3,7 +3,7 @@ import 'learning_path.dart';
 import 'learning_state.dart';
 import 'next_action.dart';
 
-/// Service that manages Story Mode learning progression logic.
+/// Service that manages Academy learning progression logic.
 ///
 /// Handles:
 /// - Computing the next action (Drill/Progression/Exam/Complete)
@@ -11,13 +11,13 @@ import 'next_action.dart';
 /// - Unlocking moves when requirements are met
 /// - Initializing learning state for new users
 class LearningProgressService {
-  /// Gets the required number of progression sessions for a given phase.
+  /// Gets the required number of progression sessions for a given level.
   ///
-  /// Phase 1: 1 session
-  /// Phases 2-3: 2-3 sessions (using 2 for consistency)
-  /// Phases 4-6: 3 sessions
-  static int getRequiredProgressionSessions(int phase) {
-    switch (phase) {
+  /// Level 1: 1 session (basics)
+  /// Levels 2-3: 2 sessions
+  /// Levels 4-12: 3 sessions
+  static int getRequiredProgressionSessions(int level) {
+    switch (level) {
       case 1:
         return 1;
       case 2:
@@ -26,9 +26,15 @@ class LearningProgressService {
       case 4:
       case 5:
       case 6:
+      case 7:
+      case 8:
+      case 9:
+      case 10:
+      case 11:
+      case 12:
         return 3;
       default:
-        return 3; // Default to 3 for unknown phases
+        return 3; // Default to 3 for unknown levels
     }
   }
 
@@ -66,7 +72,7 @@ class LearningProgressService {
       return NextAction.drill(currentMove.id);
     }
 
-    final requiredSessions = getRequiredProgressionSessions(currentMove.phase);
+    final requiredSessions = getRequiredProgressionSessions(currentMove.level);
     if (progress.progressionSessionsDone < requiredSessions) {
       return NextAction.progression(currentMove.id);
     }
@@ -147,7 +153,7 @@ class LearningProgressService {
 
   /// Initializes a fresh LearningState for a new user.
   ///
-  /// Creates progress entries for all 18 moves:
+  /// Creates progress entries for all 38 moves:
   /// - All moves start locked (isUnlocked = false)
   /// - Current move (first not-unlocked) will be Move 1 (Jab)
   /// - Jab will show as "Ready to Unlock", not "Unlocked"
@@ -176,9 +182,9 @@ class LearningProgressService {
       isUnlocked: true,
       drillDone: true,
       examPassed: true,
-      // Set progression sessions to the required amount for this move's phase
+      // Set progression sessions to the required amount for this move's level
       progressionSessionsDone: getRequiredProgressionSessions(
-        LearningPath.getMoveById(moveId)?.phase ?? 1,
+        LearningPath.getMoveById(moveId)?.level ?? 1,
       ),
     );
 

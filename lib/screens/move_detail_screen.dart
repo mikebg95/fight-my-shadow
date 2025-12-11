@@ -405,6 +405,10 @@ class MoveDetailScreen extends StatelessWidget {
         categoryColor = Colors.purple.shade700;
         categoryIcon = Icons.directions_walk;
         break;
+      case MoveCategory.deception:
+        categoryColor = Colors.amber.shade700;
+        categoryIcon = Icons.swap_horiz;
+        break;
     }
 
     return Container(
