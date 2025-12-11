@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
+import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/data/boxing_moves_data.dart';
+import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 
 /// Library screen that displays all available moves grouped by category.
 ///
@@ -42,6 +44,9 @@ class MovesScreen extends StatelessWidget {
           children: [
             // Header
             _buildHeader(context, totalMoves),
+
+            // Academy progress header
+            _buildAcademyProgressHeader(context, learningState),
 
             // Moves list with category sections
             Expanded(
@@ -179,6 +184,123 @@ class MovesScreen extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => MoveDetailScreen(move: move),
+      ),
+    );
+  }
+
+  Widget _buildAcademyProgressHeader(BuildContext context, learningState) {
+    // Calculate unlocked moves count
+    final totalAcademyMoves = LearningPath.totalMoves;
+    final unlockedCount = learningState.moveProgress
+        .where((p) => p.isUnlocked)
+        .length;
+    final progressPercentage = (unlockedCount / totalAcademyMoves * 100).round();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.purple.shade700,
+            Colors.purple.shade900,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.shade700.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LearningProgressScreen(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.school,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'ACADEMY',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white.withValues(alpha: 0.7),
+                      size: 16,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: unlockedCount / totalAcademyMoves,
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    minHeight: 6,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$unlockedCount of $totalAcademyMoves moves unlocked',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '$progressPercentage%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
