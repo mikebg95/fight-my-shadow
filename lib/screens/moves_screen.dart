@@ -238,26 +238,25 @@ class _MoveListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     // Determine visual properties based on unlock state
     final isLocked = unlockState == MoveUnlockState.locked;
-    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlock;
+    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
+                           unlockState == MoveUnlockState.readyToUnlockDrillDone;
 
-    // Card opacity
-    final cardOpacity = isLocked ? 0.5 : 1.0;
+    // Card opacity - less greyed for locked moves
+    final cardOpacity = isLocked ? 0.75 : 1.0;
 
     // Border styling for ready-to-unlock state
     final borderColor = isReadyToUnlock
-        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)
+        ? Colors.purple.withValues(alpha: 0.5)
         : isLocked
-            ? Colors.white.withValues(alpha: 0.02)
+            ? Colors.white.withValues(alpha: 0.1)
             : Colors.white.withValues(alpha: 0.05);
 
     final borderWidth = isReadyToUnlock ? 2.0 : 1.0;
 
-    // Background color
+    // Background color - same for locked and unlocked
     final backgroundColor = isReadyToUnlock
-        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
-        : isLocked
-            ? const Color(0xFF141414)
-            : const Color(0xFF1A1A1A);
+        ? Colors.purple.withValues(alpha: 0.08)
+        : const Color(0xFF1A1A1A);
 
     return GestureDetector(
       onTap: onTap,
@@ -301,7 +300,7 @@ class _MoveListItem extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: isLocked
-                                  ? Colors.white.withValues(alpha: 0.4)
+                                  ? Colors.white.withValues(alpha: 0.6)
                                   : Colors.white,
                             ),
                       ),
@@ -339,37 +338,38 @@ class _MoveListItem extends StatelessWidget {
           ),
         );
 
-      case MoveUnlockState.readyToUnlock:
-        // Orange "Unlock" badge with key icon
+      case MoveUnlockState.readyToUnlockDrillPending:
+      case MoveUnlockState.readyToUnlockDrillDone:
+        // Purple "Next" badge
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
+                Colors.purple.shade600,
+                Colors.purple.shade800,
               ],
             ),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                color: Colors.purple.shade600.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Icon(
-                Icons.lock_open,
+                Icons.arrow_forward,
                 color: Colors.white,
                 size: 16,
               ),
               SizedBox(width: 6),
               Text(
-                'UNLOCK',
+                'NEXT',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -386,12 +386,12 @@ class _MoveListItem extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             Icons.lock,
-            color: Colors.white.withValues(alpha: 0.4),
+            color: Colors.white.withValues(alpha: 0.5),
             size: 20,
           ),
         );
@@ -400,8 +400,9 @@ class _MoveListItem extends StatelessWidget {
 
   Widget _buildCodeBadge(BuildContext context) {
     final isLocked = unlockState == MoveUnlockState.locked;
-    final isActive = unlockState == MoveUnlockState.unlocked ||
-                     unlockState == MoveUnlockState.readyToUnlock;
+    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
+                            unlockState == MoveUnlockState.readyToUnlockDrillDone;
+    final isActive = unlockState == MoveUnlockState.unlocked || isReadyToUnlock;
 
     return Container(
       width: 48,
@@ -414,17 +415,26 @@ class _MoveListItem extends StatelessWidget {
                   Colors.grey.shade700,
                 ],
               )
-            : LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
-                ],
-              ),
+            : isReadyToUnlock
+                ? LinearGradient(
+                    colors: [
+                      Colors.purple.shade600,
+                      Colors.purple.shade800,
+                    ],
+                  )
+                : LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.secondary,
+                    ],
+                  ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  color: isReadyToUnlock
+                      ? Colors.purple.shade600.withValues(alpha: 0.3)
+                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -438,7 +448,7 @@ class _MoveListItem extends StatelessWidget {
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: isLocked
-                ? Colors.white.withValues(alpha: 0.4)
+                ? Colors.white.withValues(alpha: 0.6)
                 : Colors.white,
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/main.dart';
 
 /// Screen that displays detailed information about a single move.
 ///
@@ -35,6 +36,76 @@ class MoveDetailScreen extends StatelessWidget {
     await controller.unlockMove(targetLearningMove.id);
   }
 
+  void _handleStartDrill(BuildContext context) async {
+    // Find the LearningMove that corresponds to this Move
+    final allLearningMoves = LearningPath.getAllMoves();
+    LearningMove? targetLearningMove;
+
+    for (final learningMove in allLearningMoves) {
+      if (learningMove.moveCodes.contains(move.code)) {
+        targetLearningMove = learningMove;
+        break;
+      }
+    }
+
+    if (targetLearningMove == null) return;
+
+    // For now, show a placeholder dialog and mark drill as complete
+    // TODO: Navigate to actual drill session screen
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Drill Session'),
+        content: Text('Drill session for ${move.name} completed!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    // Mark drill as done
+    final controller = context.read<StoryModeController>();
+    await controller.markDrillDone(targetLearningMove.id);
+  }
+
+  void _handleAddToArsenal(BuildContext context) async {
+    // Find the LearningMove that corresponds to this Move
+    final allLearningMoves = LearningPath.getAllMoves();
+    LearningMove? targetLearningMove;
+
+    for (final learningMove in allLearningMoves) {
+      if (learningMove.moveCodes.contains(move.code)) {
+        targetLearningMove = learningMove;
+        break;
+      }
+    }
+
+    if (targetLearningMove == null) return;
+
+    // For now, show a placeholder dialog
+    // TODO: Start lightweight practice session with unlocked moves
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add to Arsenal'),
+        content: Text('Starting practice session for ${move.name} with unlocked moves!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    // After "add to arsenal" session, unlock the move
+    final controller = context.read<StoryModeController>();
+    await controller.unlockMove(targetLearningMove.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watch the controller for state changes
@@ -61,7 +132,7 @@ class MoveDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Unlock status banner
-                    _buildUnlockStatusBanner(context, unlockState),
+                    _buildUnlockStatusBanner(context, unlockState, currentMove),
 
                     // Visual placeholder area
                     _buildVisualPlaceholder(context),
@@ -162,23 +233,23 @@ class MoveDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUnlockStatusBanner(BuildContext context, MoveUnlockState unlockState) {
+  Widget _buildUnlockStatusBanner(BuildContext context, MoveUnlockState unlockState, LearningMove? currentMove) {
     switch (unlockState) {
-      case MoveUnlockState.readyToUnlock:
-        // Show prominent UNLOCK button
+      case MoveUnlockState.readyToUnlockDrillPending:
+        // Show START DRILL button
         return Container(
           margin: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
+                Colors.purple.shade600,
+                Colors.purple.shade800,
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                color: Colors.purple.shade600.withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -187,14 +258,14 @@ class MoveDetailScreen extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => _handleUnlock(context),
+              onTap: () => _handleStartDrill(context),
               borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+              child: const Padding(
+                padding: EdgeInsets.all(20),
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(
-                      Icons.lock_open,
+                      Icons.school,
                       color: Colors.white,
                       size: 32,
                     ),
@@ -204,7 +275,7 @@ class MoveDetailScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'UNLOCK THIS MOVE',
+                            'START DRILL',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -214,7 +285,79 @@ class MoveDetailScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Unlock to use in training and Story Mode',
+                            'Learn this move with guided practice',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+      case MoveUnlockState.readyToUnlockDrillDone:
+        // Show ADD TO ARSENAL button
+        return Container(
+          margin: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.purple.shade600,
+                Colors.purple.shade800,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.purple.shade600.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _handleAddToArsenal(context),
+              borderRadius: BorderRadius.circular(16),
+              child: const Padding(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.add_circle,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ADD TO ARSENAL',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Practice with unlocked moves',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.white,
@@ -271,10 +414,10 @@ class MoveDetailScreen extends StatelessWidget {
         );
 
       case MoveUnlockState.locked:
-        // Show subtle locked label
+        // Show locked label with next move to unlock
         return Container(
           margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
@@ -283,23 +426,69 @@ class MoveDetailScreen extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.lock,
-                color: Colors.white.withValues(alpha: 0.5),
-                size: 24,
+              Row(
+                children: [
+                  Icon(
+                    Icons.lock,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'LOCKED',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Text(
-                'LOCKED',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.5),
-                  letterSpacing: 1.2,
+              if (currentMove != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Before unlocking this move, first unlock',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to the current move's detail page
+                    final repository = InMemoryMoveRepository();
+                    final nextMoveCode = currentMove.moveCodes.first;
+                    final nextMove = repository.getMoveByCode(nextMoveCode);
+                    if (nextMove != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MoveDetailScreen(move: nextMove),
+                        ),
+                      );
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    currentMove.displayName,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.purple.shade400,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

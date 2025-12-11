@@ -7,8 +7,11 @@ enum MoveUnlockState {
   /// Move has been fully unlocked by Story Mode.
   unlocked,
 
-  /// Move is the current learning move - ready to be unlocked next.
-  readyToUnlock,
+  /// Move is the current learning move - drill not yet completed.
+  readyToUnlockDrillPending,
+
+  /// Move is the current learning move - drill completed, ready to add to arsenal.
+  readyToUnlockDrillDone,
 
   /// Move is locked and comes after the current move.
   locked,
@@ -16,15 +19,16 @@ enum MoveUnlockState {
 
 /// Service that determines the unlock state of a move based on Story Mode progress.
 ///
-/// Returns one of three visual states:
+/// Returns one of four visual states:
 /// - Unlocked: Move has been fully unlocked
-/// - ReadyToUnlock: Move is the current learning move (next to unlock)
+/// - ReadyToUnlockDrillPending: Move is current, drill not yet done
+/// - ReadyToUnlockDrillDone: Move is current, drill done, ready for arsenal
 /// - Locked: Move comes after the current move
 class MoveLockStatusResolver {
   /// Determines the visual unlock state of a move by its code.
   ///
-  /// Takes the current learning move into account to show which move
-  /// is "ready to unlock" (the next one in the progression).
+  /// Takes the current learning move and drill completion into account
+  /// to show the appropriate action button.
   static MoveUnlockState getUnlockState(
     String moveCode,
     LearningState learningState,
@@ -46,7 +50,12 @@ class MoveLockStatusResolver {
 
         // Check if this is the current learning move (ready to unlock)
         if (currentMove != null && currentMove.id == learningMove.id) {
-          return MoveUnlockState.readyToUnlock;
+          // Check if drill has been completed
+          if (progress != null && progress.drillDone) {
+            return MoveUnlockState.readyToUnlockDrillDone;
+          } else {
+            return MoveUnlockState.readyToUnlockDrillPending;
+          }
         }
 
         // Not unlocked and not current - it's locked
