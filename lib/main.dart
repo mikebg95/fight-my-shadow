@@ -678,6 +678,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   // Combo-related state
   late BoxingComboGenerator _comboGenerator;
+  late MoveRepository _moveRepository;
   Combo? _currentCombo;
   ComboPhase _comboPhase = ComboPhase.idle;
   double _comboPhaseRemainingSeconds = 0.0;
@@ -692,8 +693,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     isPaused = false;
 
     // Initialize combo generator
-    final repository = InMemoryMoveRepository();
-    _comboGenerator = BoxingComboGenerator(repository);
+    _moveRepository = InMemoryMoveRepository();
+    _comboGenerator = BoxingComboGenerator(_moveRepository);
 
     _startTimer();
     _startNewComboIfNeeded();
@@ -931,24 +932,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
               // Main timer area
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Phase indicator
-                    _buildPhaseIndicator(),
-                    const SizedBox(height: 24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Phase indicator
+                      _buildPhaseIndicator(),
+                      const SizedBox(height: 20),
 
-                    // Round info
-                    _buildRoundInfo(),
-                    const SizedBox(height: 32),
+                      // Round info
+                      _buildRoundInfo(),
+                      const SizedBox(height: 24),
 
-                    // Timer
-                    _buildTimer(),
-                    const SizedBox(height: 48),
+                      // Timer
+                      _buildTimer(),
+                      const SizedBox(height: 24),
 
-                    // Configuration summary
-                    _buildConfigSummary(),
-                  ],
+                      // Combo display
+                      _buildComboCard(),
+                      const SizedBox(height: 24),
+
+                      // Configuration summary
+                      _buildConfigSummary(),
+                    ],
+                  ),
                 ),
               ),
 
@@ -1118,6 +1124,69 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComboCard() {
+    // Determine what to display
+    String mainText;
+    String? secondaryText;
+
+    if (currentPhase == WorkoutPhase.rest) {
+      // During rest phase
+      mainText = 'Rest';
+      secondaryText = null;
+    } else if (_currentCombo == null || _comboPhase == ComboPhase.idle) {
+      // No active combo
+      mainText = 'Ready';
+      secondaryText = null;
+    } else {
+      // Active combo - display codes and names
+      final codes = _currentCombo!.moveCodes;
+
+      // Join codes with separator
+      mainText = codes.join(' – ');
+
+      // Resolve move names
+      final moveNames = codes.map((code) {
+        final move = _moveRepository.getMoveByCode(code);
+        return move?.name ?? code; // Fallback to code if not found
+      }).toList();
+
+      secondaryText = moveNames.join(' – ');
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Main text (codes or status)
+            Text(
+              mainText,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                    color: Colors.white,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            // Secondary text (move names)
+            if (secondaryText != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                secondaryText,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),
