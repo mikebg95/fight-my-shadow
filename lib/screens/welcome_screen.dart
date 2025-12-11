@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
 import 'package:fight_my_shadow/main.dart';
+import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 
 /// Welcome screen where users select their training discipline.
 ///
@@ -27,7 +28,9 @@ class WelcomeScreen extends StatelessWidget {
               sliver: SliverToBoxAdapter(
                 child: Column(
                   children: [
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+                    _buildStoryModeButton(context),
+                    const SizedBox(height: 32),
                     _buildSportGrid(context),
                     const SizedBox(height: 32),
                     _buildFooterText(context),
@@ -134,12 +137,98 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildStoryModeButton(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 72,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.purple.shade600,
+            Colors.purple.shade800,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.shade600.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const LearningProgressScreen(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.school,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'STORY MODE',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              fontSize: 16,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Learn moves step by step',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFooterText(BuildContext context) {
     return Text(
       'You can change this later in settings',
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
           ),
       textAlign: TextAlign.center,
     );
