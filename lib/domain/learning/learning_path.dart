@@ -1,4 +1,6 @@
 import 'package:fight_my_shadow/domain/learning/learning_move.dart';
+import 'package:fight_my_shadow/models/move.dart';
+import 'package:fight_my_shadow/repositories/move_repository.dart';
 
 /// The canonical learning path for Story Mode.
 ///
@@ -244,5 +246,62 @@ class LearningPath {
   /// Returns 0 if the phase number is invalid.
   static int getMovesCountInPhase(int phase) {
     return _allMoves.where((move) => move.phase == phase).length;
+  }
+
+  /// Returns the actual Move objects for a given LearningMove from the repository.
+  ///
+  /// A LearningMove can reference multiple move codes (e.g., Rhythm variations uses T and U).
+  /// This method resolves all those codes to actual Move objects.
+  ///
+  /// Returns an empty list if no moves could be resolved.
+  static List<Move> getActualMovesForLearningMove(
+    LearningMove learningMove,
+    MoveRepository repository,
+  ) {
+    final moves = <Move>[];
+    for (final code in learningMove.moveCodes) {
+      final move = repository.getMoveByCode(code);
+      if (move != null) {
+        moves.add(move);
+      }
+    }
+    return moves;
+  }
+
+  /// Returns a map of LearningMove ID to its corresponding actual Move(s).
+  ///
+  /// For learning moves with single move codes, the list will have one item.
+  /// For learning moves with multiple codes (like Rhythm variations), it will have multiple.
+  static Map<int, List<Move>> getAllLearningMoveToActualMovesMap(
+    MoveRepository repository,
+  ) {
+    final map = <int, List<Move>>{};
+    for (final learningMove in _allMoves) {
+      map[learningMove.id] = getActualMovesForLearningMove(learningMove, repository);
+    }
+    return map;
+  }
+
+  /// Returns all unique Move codes used in the learning path, in unlock order.
+  ///
+  /// This represents the complete set of moves that participate in Story Mode.
+  static List<String> getAllMoveCodesInOrder() {
+    final codes = <String>[];
+    for (final learningMove in _allMoves) {
+      codes.addAll(learningMove.moveCodes);
+    }
+    return codes;
+  }
+
+  /// Returns all unique actual Moves used in the learning path, in unlock order.
+  ///
+  /// This represents the complete set of Move objects that should appear in Story Mode.
+  static List<Move> getAllActualMovesInOrder(MoveRepository repository) {
+    final moves = <Move>[];
+    for (final learningMove in _allMoves) {
+      final actualMoves = getActualMovesForLearningMove(learningMove, repository);
+      moves.addAll(actualMoves);
+    }
+    return moves;
   }
 }

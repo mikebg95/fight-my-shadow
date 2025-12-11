@@ -1,59 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/domain/learning/learning_state.dart';
 import 'package:fight_my_shadow/domain/learning/learning_progress_service.dart';
 import 'package:fight_my_shadow/domain/learning/next_action.dart';
+import 'package:fight_my_shadow/repositories/move_repository.dart';
+import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 
 /// Story Mode home screen showing learning progress and next action.
 ///
 /// Displays:
 /// - Global progress bar showing unlocked moves
-/// - All 18 learning moves grouped by phase (1-6)
-/// - Status for each move (Locked / In Progress / Unlocked)
+/// - All learning moves grouped by phase (1-6), using actual Move objects from repository
+/// - Status for each move (Locked / Ready to Unlock / Unlocked) using same logic as Library
 /// - Large CTA button reflecting the next action (Drill/Progression/Exam/Complete)
-class LearningProgressScreen extends StatefulWidget {
+class LearningProgressScreen extends StatelessWidget {
   const LearningProgressScreen({super.key});
 
   @override
-  State<LearningProgressScreen> createState() => _LearningProgressScreenState();
-}
-
-class _LearningProgressScreenState extends State<LearningProgressScreen> {
-  late LearningState _learningState;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize with fresh state for now
-    // In future, this will load from persistence
-    _learningState = LearningProgressService.initializeFreshState();
-  }
-
-  // Helper to determine move status
-  MoveStatus _getMoveStatus(LearningMove move) {
-    final progress = _learningState.getProgressForMove(move.id);
-    if (progress == null) return MoveStatus.locked;
-
-    if (progress.isUnlocked) {
-      return MoveStatus.unlocked;
-    }
-
-    final currentMove = _learningState.currentMove;
-    if (currentMove != null && currentMove.id == move.id) {
-      return MoveStatus.inProgress;
-    }
-
-    return MoveStatus.locked;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final allMoves = LearningPath.getAllMoves();
-    final unlockedCount = _learningState.moveProgress
+    // Get global state from controller
+    final controller = context.watch<StoryModeController>();
+    final learningState = controller.state;
+    final repository = InMemoryMoveRepository();
+
+    final allLearningMoves = LearningPath.getAllMoves();
+    final unlockedCount = learningState.moveProgress
         .where((p) => p.isUnlocked)
         .length;
-    final nextAction = LearningProgressService.computeNextAction(_learningState);
+    final nextAction = LearningProgressService.computeNextAction(learningState);
 
     return Scaffold(
       body: SafeArea(
@@ -68,11 +45,11 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
                 child: Column(
                   children: [
                     // Global progress section
-                    _buildGlobalProgressSection(context, unlockedCount, 18),
+                    _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves),
                     const SizedBox(height: 24),
 
                     // Moves list grouped by phase
-                    _buildMovesListByPhase(context, allMoves),
+                    _buildMovesListByPhase(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
                   ],
                 ),
@@ -83,7 +60,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
       ),
 
       // Bottom CTA button (pinned)
-      bottomNavigationBar: _buildBottomCTA(context, nextAction),
+      bottomNavigationBar: _buildBottomCTA(context, nextAction, learningState),
     );
   }
 
@@ -222,12 +199,14 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
 
   Widget _buildMovesListByPhase(
     BuildContext context,
-    List<LearningMove> allMoves,
+    List<LearningMove> allLearningMoves,
+    MoveRepository repository,
+    LearningState learningState,
   ) {
-    // Group moves by phase
+    // Group learning moves by phase
     final movesByPhase = <int, List<LearningMove>>{};
-    for (final move in allMoves) {
-      movesByPhase.putIfAbsent(move.phase, () => []).add(move);
+    for (final learningMove in allLearningMoves) {
+      movesByPhase.putIfAbsent(learningMove.phase, () => []).add(learningMove);
     }
 
     // Sort phases
@@ -238,11 +217,11 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: sortedPhases.map((phase) {
-          final moves = movesByPhase[phase]!;
+          final learningMoves = movesByPhase[phase]!;
           // Sort moves by orderInPhase
-          moves.sort((a, b) => a.orderInPhase.compareTo(b.orderInPhase));
+          learningMoves.sort((a, b) => a.orderInPhase.compareTo(b.orderInPhase));
 
-          return _buildPhaseSection(context, phase, moves);
+          return _buildPhaseSection(context, phase, learningMoves, repository, learningState);
         }).toList(),
       ),
     );
@@ -251,10 +230,12 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
   Widget _buildPhaseSection(
     BuildContext context,
     int phase,
-    List<LearningMove> moves,
+    List<LearningMove> learningMoves,
+    MoveRepository repository,
+    LearningState learningState,
   ) {
     // Get phase name from first move
-    final phaseName = moves.first.phaseName;
+    final phaseName = learningMoves.first.phaseName;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,28 +281,53 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
         ),
 
         // Moves in this phase
-        ...moves.map((move) => _buildMoveRow(context, move)),
+        ...learningMoves.map((learningMove) =>
+          _buildMoveRow(context, learningMove, repository, learningState)),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildMoveRow(BuildContext context, LearningMove move) {
-    final status = _getMoveStatus(move);
-    final isCurrentMove = status == MoveStatus.inProgress;
+  Widget _buildMoveRow(
+    BuildContext context,
+    LearningMove learningMove,
+    MoveRepository repository,
+    LearningState learningState,
+  ) {
+    // Get the actual Move object(s) for this learning move
+    final actualMoves = LearningPath.getActualMovesForLearningMove(learningMove, repository);
+
+    // For lock state, use the first move code (primary move)
+    final primaryMoveCode = learningMove.moveCodes.first;
+    final currentMove = learningState.currentMove;
+    final unlockState = MoveLockStatusResolver.getUnlockState(
+      primaryMoveCode,
+      learningState,
+      currentMove,
+    );
+
+    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlock;
+
+    // Get the display name from actual Move or fallback to learning move name
+    final displayName = actualMoves.isNotEmpty
+        ? actualMoves.first.name
+        : learningMove.displayName;
+
+    // Get description from learning move (it provides better educational context)
+    final description = learningMove.description;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isCurrentMove
+        color: isReadyToUnlock
             ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
             : const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isCurrentMove
+          color: isReadyToUnlock
               ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
               : Colors.white.withValues(alpha: 0.05),
-          width: isCurrentMove ? 2 : 1,
+          width: isReadyToUnlock ? 2 : 1,
         ),
       ),
       child: Material(
@@ -336,7 +342,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
             child: Row(
               children: [
                 // Status icon
-                _buildStatusIcon(context, status),
+                _buildStatusIcon(context, unlockState),
                 const SizedBox(width: 14),
 
                 // Move info
@@ -345,16 +351,16 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        move.displayName,
+                        displayName,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                       ),
-                      if (move.description.isNotEmpty) ...[
+                      if (description.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
-                          move.description,
+                          description,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 fontSize: 12,
                               ),
@@ -368,7 +374,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
                 const SizedBox(width: 12),
 
                 // Status badge
-                _buildStatusBadge(context, status),
+                _buildStatusBadge(context, unlockState),
               ],
             ),
           ),
@@ -377,20 +383,20 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
     );
   }
 
-  Widget _buildStatusIcon(BuildContext context, MoveStatus status) {
+  Widget _buildStatusIcon(BuildContext context, MoveUnlockState unlockState) {
     IconData icon;
     Color color;
 
-    switch (status) {
-      case MoveStatus.unlocked:
+    switch (unlockState) {
+      case MoveUnlockState.unlocked:
         icon = Icons.check_circle;
         color = Colors.green.shade400;
         break;
-      case MoveStatus.inProgress:
+      case MoveUnlockState.readyToUnlock:
         icon = Icons.radio_button_checked;
         color = Theme.of(context).colorScheme.primary;
         break;
-      case MoveStatus.locked:
+      case MoveUnlockState.locked:
         icon = Icons.lock;
         color = Colors.white.withValues(alpha: 0.3);
         break;
@@ -399,23 +405,23 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
     return Icon(icon, color: color, size: 24);
   }
 
-  Widget _buildStatusBadge(BuildContext context, MoveStatus status) {
+  Widget _buildStatusBadge(BuildContext context, MoveUnlockState unlockState) {
     String label;
     Color bgColor;
     Color textColor;
 
-    switch (status) {
-      case MoveStatus.unlocked:
+    switch (unlockState) {
+      case MoveUnlockState.unlocked:
         label = 'Done';
         bgColor = Colors.green.shade400.withValues(alpha: 0.15);
         textColor = Colors.green.shade400;
         break;
-      case MoveStatus.inProgress:
-        label = 'Current';
+      case MoveUnlockState.readyToUnlock:
+        label = 'Unlock';
         bgColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.15);
         textColor = Theme.of(context).colorScheme.primary;
         break;
-      case MoveStatus.locked:
+      case MoveUnlockState.locked:
         label = 'Locked';
         bgColor = Colors.white.withValues(alpha: 0.05);
         textColor = Colors.white.withValues(alpha: 0.5);
@@ -440,7 +446,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
     );
   }
 
-  Widget _buildBottomCTA(BuildContext context, NextAction nextAction) {
+  Widget _buildBottomCTA(BuildContext context, NextAction nextAction, LearningState learningState) {
     String buttonLabel;
     String? subtitleText;
     IconData buttonIcon;
@@ -462,7 +468,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
             ? LearningPath.getMoveById(nextAction.moveId!)
             : null;
         final progress = nextAction.moveId != null
-            ? _learningState.getProgressForMove(nextAction.moveId!)
+            ? learningState.getProgressForMove(nextAction.moveId!)
             : null;
         buttonLabel = 'Do Progression Session';
         buttonIcon = Icons.fitness_center;
@@ -541,7 +547,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () => _handleCTAPressed(nextAction),
+                  onTap: () => _handleCTAPressed(context, nextAction),
                   borderRadius: BorderRadius.circular(16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -575,7 +581,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
     );
   }
 
-  void _handleCTAPressed(NextAction nextAction) {
+  void _handleCTAPressed(BuildContext context, NextAction nextAction) {
     switch (nextAction.type) {
       case NextActionType.drill:
         // TODO: Navigate to drill session
@@ -627,11 +633,4 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
       ),
     );
   }
-}
-
-/// Status of a learning move for UI display.
-enum MoveStatus {
-  locked,
-  inProgress,
-  unlocked,
 }
