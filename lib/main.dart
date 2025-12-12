@@ -305,8 +305,24 @@ class _HomeScreenState extends State<HomeScreen> {
   Difficulty difficulty = Difficulty.intermediate;
   Intensity intensity = Intensity.medium;
 
+  // Academy color palette (purple) - for empty state
+  static const _academyPrimary = Color(0xFF9C27B0);
+  static const _academySecondary = Color(0xFFBA68C8);
+
   @override
   Widget build(BuildContext context) {
+    // Check if user has any unlocked moves
+    final controller = context.watch<StoryModeController>();
+    final learningState = controller.state;
+    final unlockedCount = learningState.moveProgress
+        .where((p) => p.isUnlocked)
+        .length;
+
+    // Show empty state if no moves unlocked
+    if (unlockedCount == 0) {
+      return _buildEmptyState(context);
+    }
+
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -326,6 +342,124 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildStartButton(),
                   const SizedBox(height: 20),
                 ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header (same as normal screen)
+            _buildHeader(),
+
+            // Empty state content (centered)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Lock icon
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: _academyPrimary.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _academyPrimary.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.lock_outline,
+                        color: _academyPrimary.withValues(alpha: 0.7),
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Title text
+                    Text(
+                      "You haven't unlocked any moves yet!",
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Subtitle
+                    Text(
+                      'Complete drills in the Academy to unlock moves for training.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Go to Academy button
+                    Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [_academyPrimary, _academySecondary],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _academyPrimary.withValues(alpha: 0.4),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LearningProgressScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.school,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'GO TO ACADEMY',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.0,
+                                        color: Colors.white,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
