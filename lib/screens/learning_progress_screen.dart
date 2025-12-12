@@ -211,7 +211,6 @@ class LearningProgressScreen extends StatelessWidget {
             _academyPrimary.withValues(alpha: 0.8),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: _academyPrimary.withValues(alpha: 0.4),
