@@ -54,33 +54,30 @@ class LearningProgressScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Hero header for Level 0 state OR normal content
-                    if (isLevelZero)
-                      _buildLevelZeroHero(context)
-                    else ...[
-                      // Global progress section (moved to bottom when Level 0)
-                      _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
+                    // Level 0 state: Hero → CTA → Progress
+                    if (isLevelZero) ...[
+                      // 1. Hero header
+                      _buildLevelZeroHero(context),
                       const SizedBox(height: 24),
 
-                      // Moves list grouped by level
-                      _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
-                    ],
-                    const SizedBox(height: 24),
-
-                    // Bottom CTA (as inline widget when Level 0, otherwise in bottomNavigationBar)
-                    if (isLevelZero)
+                      // 2. CTA card
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: _buildCTACard(context, nextAction, learningState),
                       ),
+                      const SizedBox(height: 32),
 
-                    // Progress bar at bottom when Level 0
-                    if (isLevelZero) ...[
-                      const SizedBox(height: 24),
+                      // 3. Progress bar at bottom
                       _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
+                      const SizedBox(height: 40),
+                    ]
+                    // Normal state: Progress → Moves List
+                    else ...[
+                      _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
+                      const SizedBox(height: 24),
+                      _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
+                      const SizedBox(height: 100), // Space for bottom CTA
                     ],
-
-                    const SizedBox(height: 100), // Space for bottom CTA when not Level 0
                   ],
                 ),
               ),
