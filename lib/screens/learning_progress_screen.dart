@@ -542,6 +542,13 @@ class LearningProgressScreen extends StatelessWidget {
         break;
     }
 
+    // Calculate completion progress
+    final completedCount = learningState.moveProgress
+        .where((p) => p.isUnlocked)
+        .length;
+    final totalMoves = LearningPath.totalMoves;
+    final completionPercentage = ((completedCount / totalMoves) * 100).toInt();
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -619,6 +626,41 @@ class LearningProgressScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+            ),
+
+            // Progress row
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '$completedCount out of $totalMoves moves completed',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                ),
+                Text(
+                  '$completionPercentage%',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _academyPrimary.withValues(alpha: 0.8),
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: completedCount / totalMoves,
+                minHeight: 6,
+                backgroundColor: Colors.white.withValues(alpha: 0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  _academyPrimary.withValues(alpha: 0.7),
                 ),
               ),
             ),
