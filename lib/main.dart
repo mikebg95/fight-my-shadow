@@ -1061,9 +1061,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   static const double _trainingExecutionAdvanced = 1.2;
 
   // Recovery timing (seconds) for normal Training Sessions
-  static const double _trainingRecoveryLow = 4.0;
-  static const double _trainingRecoveryMedium = 2.5;
-  static const double _trainingRecoveryHigh = 1.5;
+  // Reduced by ~2 seconds from original values for faster cadence
+  static const double _trainingRecoveryLow = 2.5;
+  static const double _trainingRecoveryMedium = 1.5;
+  static const double _trainingRecoveryHigh = 1.0;
 
   late int currentRound;
   late WorkoutPhase currentPhase;
@@ -1120,25 +1121,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _soundService = SoundEffectsService();
     _soundService.initialize();
 
-    // For Drill and Add-to-Arsenal: play bell and start with 3-second "Get Ready" delay
-    final isAcademyMode = widget.config.mode == SessionMode.drill ||
-                          widget.config.mode == SessionMode.addToArsenal;
-    if (isAcademyMode) {
-      _soundService.playBell();
-      _isInGetReadyDelay = true;
-      _getReadyRemainingSeconds = 3.0;
-      _isComboVisible = false; // Start hidden, will show when first combo appears
-    } else {
-      // Training mode: start with combo visible immediately
-      _isComboVisible = true;
-    }
+    // For ALL modes: play bell and start with 3-second "Get Ready" delay
+    _soundService.playBell();
+    _isInGetReadyDelay = true;
+    _getReadyRemainingSeconds = 3.0;
+    _isComboVisible = false; // Start hidden, will show when first combo appears
 
     _startTimer();
-
-    // Only start combo immediately if NOT in Academy mode
-    if (!isAcademyMode) {
-      _startNewComboIfNeeded();
-    }
+    // Combo will start after get-ready delay expires (in _startTimer)
   }
 
   @override
@@ -1207,10 +1197,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _clearCombo();
       _previousCombo = null;
 
-      // Play bell at round end (Academy modes only)
-      if (isAcademyMode) {
-        _soundService.playBell();
-      }
+      // Play bell at round end (ALL modes)
+      _soundService.playBell();
 
       if (currentRound < widget.config.rounds) {
         // Move to rest phase
@@ -1236,15 +1224,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       currentPhase = WorkoutPhase.round;
       remainingSeconds = widget.config.roundDurationSeconds;
 
-      // For Academy modes: play bell and start with get-ready delay
-      if (isAcademyMode) {
-        _soundService.playBell();
-        _isInGetReadyDelay = true;
-        _getReadyRemainingSeconds = 3.0;
-      } else {
-        // Start combo immediately for normal training
-        _startNewComboIfNeeded();
-      }
+      // For ALL modes: play bell and start with get-ready delay
+      _soundService.playBell();
+      _isInGetReadyDelay = true;
+      _getReadyRemainingSeconds = 3.0;
+      // Combo will start after get-ready delay expires (in _startTimer)
     }
   }
 
@@ -1393,9 +1377,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return 0.3 + (combo.moveCodes.length * 0.15); // ~0.3-0.75s
     }
 
-    // Training mode: longer announce for clearer guidance
-    const baseSeconds = 1.0;
-    const secondsPerMove = 0.3;
+    // Training mode: slightly reduced announce for faster cadence
+    const baseSeconds = 0.7;
+    const secondsPerMove = 0.2;
     return baseSeconds + (combo.moveCodes.length * secondsPerMove);
   }
 
@@ -1463,51 +1447,49 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
 
     // Training mode: shifted timing based on difficulty + intensity
-    // Intermediate uses old Beginner recovery, Advanced uses old Intermediate but faster
+    // Recovery reduced by ~2s from original values for faster cadence
     double recoverySeconds;
 
     switch (widget.config.difficulty) {
       case Difficulty.beginner:
-        // Beginner unchanged
         switch (widget.config.intensity) {
           case Intensity.low:
-            recoverySeconds = _trainingRecoveryLow; // 4.0
+            recoverySeconds = _trainingRecoveryLow; // 2.5
             break;
           case Intensity.medium:
-            recoverySeconds = _trainingRecoveryMedium; // 2.5
+            recoverySeconds = _trainingRecoveryMedium; // 1.5
             break;
           case Intensity.high:
-            recoverySeconds = _trainingRecoveryHigh; // 1.5
+            recoverySeconds = _trainingRecoveryHigh; // 1.0
             break;
         }
         break;
 
       case Difficulty.intermediate:
-        // Intermediate now uses old Beginner recovery timing
         switch (widget.config.intensity) {
           case Intensity.low:
-            recoverySeconds = _trainingRecoveryLow; // 4.0
+            recoverySeconds = _trainingRecoveryLow; // 2.5
             break;
           case Intensity.medium:
-            recoverySeconds = _trainingRecoveryMedium; // 2.5
+            recoverySeconds = _trainingRecoveryMedium; // 1.5
             break;
           case Intensity.high:
-            recoverySeconds = _trainingRecoveryHigh; // 1.5
+            recoverySeconds = _trainingRecoveryHigh; // 1.0
             break;
         }
         break;
 
       case Difficulty.advanced:
-        // Advanced uses old Intermediate timing, then reduces by 0.75s for faster pace
+        // Advanced reduces by additional 0.75s for faster pace
         switch (widget.config.intensity) {
           case Intensity.low:
-            recoverySeconds = _trainingRecoveryLow - 0.75; // 3.25
+            recoverySeconds = _trainingRecoveryLow - 0.75; // 1.75
             break;
           case Intensity.medium:
-            recoverySeconds = _trainingRecoveryMedium - 0.75; // 1.75
+            recoverySeconds = _trainingRecoveryMedium - 0.75; // 0.75
             break;
           case Intensity.high:
-            recoverySeconds = _trainingRecoveryHigh - 0.75; // 0.75
+            recoverySeconds = _trainingRecoveryHigh - 0.75; // 0.25 (clamped to 0.5)
             break;
         }
         break;
