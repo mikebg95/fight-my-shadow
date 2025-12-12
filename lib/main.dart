@@ -982,6 +982,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isComboVisible = true;
   double _comboHideDelaySeconds = 0.0;
 
+  // Track whether we've ever shown a combo in this session
+  // Used to prevent empty combo card from showing at round start in Academy modes
+  bool _hasEverShownACombo = false;
+
   // Combo sequence counter for unique identification
   // Increments each time a new combo is created, ensuring voice speaks every combo
   int _comboSequenceCounter = 0;
@@ -1207,7 +1211,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   ///
   /// In Academy modes (Drill/Arsenal), only show card when:
   /// - During rest phase, OR
-  /// - Combo is visible (has text to display)
+  /// - We've shown at least one combo AND combo is visible AND currentCombo exists
   ///
   /// In Training mode, always show the card.
   bool get _shouldShowComboCard {
@@ -1219,8 +1223,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return true;
     }
 
-    // Academy modes: show only when rest or combo is visible
-    return currentPhase == WorkoutPhase.rest || _isComboVisible;
+    // Academy modes: show during rest, or when we have visible combo content
+    if (currentPhase == WorkoutPhase.rest) {
+      return true; // Show rest card
+    }
+
+    // Show combo card only if we've ever shown a combo, combo is visible, and we have content
+    return _hasEverShownACombo && _isComboVisible && _currentCombo != null;
+  }
+
+  /// Determines whether the configuration summary card should be shown.
+  ///
+  /// In Academy modes (Drill/Arsenal) with only 1 round, hide the config card.
+  /// Otherwise show it (with Difficulty/Intensity hidden for Academy modes).
+  bool get _shouldShowConfigCard {
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+
+    if (!isAcademyMode) {
+      // Training mode: always show
+      return true;
+    }
+
+    // Academy modes: hide if only 1 round, otherwise show
+    return widget.config.rounds > 1;
   }
 
   String _formatTime(int seconds) {
@@ -1400,6 +1426,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _isComboVisible = true;
     _comboHideDelaySeconds = 0.0;
 
+    // Track that we've shown at least one combo (prevents empty card at start)
+    if (!_hasEverShownACombo) {
+      _hasEverShownACombo = true;
+    }
+
     // Immediately trigger voice for this new combo (event-driven, not timer-based)
     // This ensures voice speaks even for very short announce durations (<1s in drill mode)
     if (!isPaused && currentPhase == WorkoutPhase.round) {
@@ -1514,8 +1545,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         const SizedBox(height: 24),
                       ],
 
-                      // Configuration summary
-                      _buildConfigSummary(),
+                      // Configuration summary (conditionally shown)
+                      if (_shouldShowConfigCard) ...[
+                        _buildConfigSummary(),
+                      ],
                     ],
                   ),
                 ),
