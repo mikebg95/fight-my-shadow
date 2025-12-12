@@ -42,11 +42,15 @@ class LearningProgressScreen extends StatelessWidget {
             // Header
             _buildHeader(context),
 
+            // Hero banner (full-width)
+            _buildLevelHero(context, allLearningMoves, learningState),
+
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    const SizedBox(height: 16),
                     // Moves list grouped by level
                     _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
@@ -60,6 +64,165 @@ class LearningProgressScreen extends StatelessWidget {
 
       // Bottom CTA button (pinned)
       bottomNavigationBar: _buildBottomCTA(context, nextAction, learningState),
+    );
+  }
+
+  /// Computes the highest level where ALL moves have been unlocked.
+  /// Returns 0 if no levels are fully completed yet.
+  int _getHighestCompletedLevel(List<LearningMove> allLearningMoves, LearningState learningState) {
+    // Group moves by level
+    final movesByLevel = <int, List<LearningMove>>{};
+    for (final learningMove in allLearningMoves) {
+      movesByLevel.putIfAbsent(learningMove.level, () => []).add(learningMove);
+    }
+
+    // Check levels from 1 to max, find highest where all are unlocked
+    final sortedLevels = movesByLevel.keys.toList()..sort();
+    int highestCompleted = 0;
+
+    for (final level in sortedLevels) {
+      final movesInLevel = movesByLevel[level]!;
+      final allUnlocked = movesInLevel.every((lm) {
+        final progress = learningState.getProgressForMove(lm.id);
+        return progress != null && progress.isUnlocked;
+      });
+
+      if (allUnlocked) {
+        highestCompleted = level;
+      } else {
+        // Stop at first incomplete level
+        break;
+      }
+    }
+
+    return highestCompleted;
+  }
+
+  Widget _buildLevelHero(BuildContext context, List<LearningMove> allLearningMoves, LearningState learningState) {
+    final highestCompletedLevel = _getHighestCompletedLevel(allLearningMoves, learningState);
+
+    // Determine display text
+    String levelText;
+    String levelName;
+    bool isCompleted;
+
+    if (highestCompletedLevel == 0) {
+      // No levels completed yet
+      levelText = 'LEVEL 0';
+      levelName = 'The First Bell';
+      isCompleted = false;
+    } else {
+      // Get the level name from any move in that level
+      final levelMoves = allLearningMoves.where((m) => m.level == highestCompletedLevel).toList();
+      levelText = 'LEVEL $highestCompletedLevel';
+      levelName = levelMoves.isNotEmpty ? levelMoves.first.levelName : 'Unknown';
+      isCompleted = true;
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _academyPrimary.withValues(alpha: 0.15),
+            _academySecondary.withValues(alpha: 0.08),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: _academyPrimary.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          bottom: BorderSide(
+            color: _academyPrimary.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Subtle confetti decoration (positioned in background)
+          Positioned(
+            top: 0,
+            right: 20,
+            child: Icon(
+              Icons.auto_awesome,
+              color: _academyPrimary.withValues(alpha: 0.15),
+              size: 48,
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 40,
+            child: Icon(
+              Icons.auto_awesome,
+              color: _academySecondary.withValues(alpha: 0.12),
+              size: 32,
+            ),
+          ),
+
+          // Main content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? Colors.green.shade400.withValues(alpha: 0.15)
+                      : _academyPrimary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isCompleted
+                        ? Colors.green.shade400.withValues(alpha: 0.3)
+                        : _academyPrimary.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  isCompleted ? 'COMPLETED' : 'IN PROGRESS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: isCompleted ? Colors.green.shade400 : _academyPrimary,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Level number
+              Text(
+                levelText,
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.0,
+                      color: Colors.white,
+                      height: 1.0,
+                    ),
+              ),
+              const SizedBox(height: 4),
+
+              // Level name
+              Text(
+                levelName,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.8),
+                      letterSpacing: 0.5,
+                    ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
