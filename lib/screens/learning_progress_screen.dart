@@ -201,35 +201,36 @@ class LearningProgressScreen extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             _academyPrimary,
+            const Color(0xFFD81B60).withValues(alpha: 0.3), // Magenta accent
             _academySecondary,
-            _academyPrimary.withValues(alpha: 0.8),
+            const Color(0xFF5E35B1).withValues(alpha: 0.4), // Deep purple accent
+            _academyPrimary.withValues(alpha: 0.9),
           ],
+          stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: _academyPrimary.withValues(alpha: 0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Stack(
         children: [
-          // Decorative sparkle elements
+          // Subtle confetti dots overlay
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _ConfettiPainter(),
+            ),
+          ),
+
+          // Decorative sparkle elements with color accents
           Positioned(
             top: 12,
             right: 20,
             child: Icon(
               Icons.auto_awesome,
-              color: Colors.white.withValues(alpha: 0.3),
+              color: const Color(0xFFFFD700).withValues(alpha: 0.4), // Gold accent
               size: 40,
             ),
           ),
@@ -238,7 +239,7 @@ class LearningProgressScreen extends StatelessWidget {
             left: 24,
             child: Icon(
               Icons.auto_awesome,
-              color: Colors.white.withValues(alpha: 0.2),
+              color: const Color(0xFF00E5FF).withValues(alpha: 0.3), // Cyan accent
               size: 28,
             ),
           ),
@@ -247,8 +248,26 @@ class LearningProgressScreen extends StatelessWidget {
             left: 60,
             child: Icon(
               Icons.auto_awesome,
-              color: Colors.white.withValues(alpha: 0.15),
+              color: const Color(0xFFFF80AB).withValues(alpha: 0.25), // Pink accent
               size: 20,
+            ),
+          ),
+          Positioned(
+            top: 20,
+            right: 80,
+            child: Icon(
+              Icons.auto_awesome,
+              color: Colors.white.withValues(alpha: 0.2),
+              size: 16,
+            ),
+          ),
+          Positioned(
+            bottom: 40,
+            right: 40,
+            child: Icon(
+              Icons.auto_awesome,
+              color: const Color(0xFF7C4DFF).withValues(alpha: 0.3), // Indigo accent
+              size: 24,
             ),
           ),
 
@@ -265,7 +284,7 @@ class LearningProgressScreen extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 2.0,
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: Colors.white.withValues(alpha: 0.95),
                       ),
                 ),
                 const SizedBox(height: 8),
@@ -289,7 +308,7 @@ class LearningProgressScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: Colors.white.withValues(alpha: 0.9),
                         letterSpacing: 0.3,
                       ),
                 ),
@@ -797,4 +816,60 @@ class LearningProgressScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Custom painter for subtle confetti dots overlay on the hero banner.
+class _ConfettiPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Define celebratory accent colors with low opacity
+    final confettiColors = [
+      const Color(0xFFFFD700).withValues(alpha: 0.15), // Gold
+      const Color(0xFF00E5FF).withValues(alpha: 0.12), // Cyan
+      const Color(0xFFFF80AB).withValues(alpha: 0.12), // Pink
+      const Color(0xFF7C4DFF).withValues(alpha: 0.15), // Indigo
+      Colors.white.withValues(alpha: 0.1),
+    ];
+
+    // Draw subtle confetti dots in strategic positions
+    final confettiPositions = [
+      Offset(size.width * 0.15, size.height * 0.2),
+      Offset(size.width * 0.85, size.height * 0.35),
+      Offset(size.width * 0.25, size.height * 0.7),
+      Offset(size.width * 0.7, size.height * 0.15),
+      Offset(size.width * 0.4, size.height * 0.85),
+      Offset(size.width * 0.92, size.height * 0.65),
+      Offset(size.width * 0.08, size.height * 0.5),
+      Offset(size.width * 0.6, size.height * 0.4),
+    ];
+
+    for (int i = 0; i < confettiPositions.length; i++) {
+      paint.color = confettiColors[i % confettiColors.length];
+      canvas.drawCircle(confettiPositions[i], 3.0, paint);
+    }
+
+    // Add some tiny sparkle lines
+    final linePaint = Paint()
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    linePaint.color = const Color(0xFFFFD700).withValues(alpha: 0.1);
+    canvas.drawLine(
+      Offset(size.width * 0.3, size.height * 0.25),
+      Offset(size.width * 0.35, size.height * 0.3),
+      linePaint,
+    );
+
+    linePaint.color = const Color(0xFFFF80AB).withValues(alpha: 0.1);
+    canvas.drawLine(
+      Offset(size.width * 0.75, size.height * 0.6),
+      Offset(size.width * 0.8, size.height * 0.55),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
