@@ -165,7 +165,7 @@ class LearningProgressScreen extends StatelessWidget {
     // Determine current level text
     String currentLevelText;
     if (currentMove != null) {
-      currentLevelText = 'Current level: LEVEL ${currentMove.level} – ${currentMove.levelName}';
+      currentLevelText = 'LEVEL ${currentMove.level} – ${currentMove.levelName}';
     } else {
       // Learning complete
       currentLevelText = 'Academy Complete';
