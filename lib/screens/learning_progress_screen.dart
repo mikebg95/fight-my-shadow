@@ -33,9 +33,6 @@ class LearningProgressScreen extends StatelessWidget {
     final repository = InMemoryMoveRepository();
 
     final allLearningMoves = LearningPath.getAllMoves();
-    final unlockedCount = learningState.moveProgress
-        .where((p) => p.isUnlocked)
-        .length;
     final nextAction = LearningProgressService.computeNextAction(learningState);
 
     return Scaffold(
@@ -50,10 +47,6 @@ class LearningProgressScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Global progress section
-                    _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
-                    const SizedBox(height: 24),
-
                     // Moves list grouped by level
                     _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
@@ -151,91 +144,6 @@ class LearningProgressScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGlobalProgressSection(
-    BuildContext context,
-    int unlockedCount,
-    int totalMoves,
-    LearningState learningState,
-  ) {
-    final progress = unlockedCount / totalMoves;
-    final currentMove = learningState.currentMove;
-
-    // Determine current level text
-    String currentLevelText;
-    if (currentMove != null) {
-      currentLevelText = 'LEVEL ${currentMove.level} – ${currentMove.levelName}';
-    } else {
-      // Learning complete
-      currentLevelText = 'Academy Complete';
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Current level indicator
-              Text(
-                currentLevelText,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      letterSpacing: 0.5,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: _academyPrimary,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Unlock moves step by step with drills, sessions, and exams',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 13,
-                    ),
-              ),
-              const SizedBox(height: 20),
-
-              // Progress bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 12,
-                  backgroundColor: const Color(0xFF0F0F0F),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    _academyPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Progress text
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '$unlockedCount of $totalMoves moves unlocked',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                  ),
-                  Text(
-                    '${(progress * 100).toInt()}%',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: _academyPrimary,
-                        ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildMovesListByLevel(
     BuildContext context,
@@ -489,7 +397,6 @@ class LearningProgressScreen extends StatelessWidget {
             ? '${move.displayName}: Drill'
             : 'Next';
         buttonIcon = Icons.arrow_forward;
-        subtitleText = 'Open move details';
         break;
 
       case NextActionType.addToArsenal:
