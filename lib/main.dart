@@ -1093,10 +1093,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isComboVisible = false;
   double _comboHideDelaySeconds = 0.0;
 
-  // Track whether we've ever shown a combo in this session
-  // Used to prevent empty combo card from showing at round start in Academy modes
-  bool _hasEverShownACombo = false;
-
   // Combo sequence counter for unique identification
   // Increments each time a new combo is created, ensuring voice speaks every combo
   int _comboSequenceCounter = 0;
@@ -1362,31 +1358,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  /// Determines whether the combo card should be shown.
-  ///
-  /// In Academy modes (Drill/Arsenal), only show card when:
-  /// - During rest phase, OR
-  /// - We've shown at least one combo AND combo is visible AND currentCombo exists
-  ///
-  /// In Training mode, always show the card.
-  bool get _shouldShowComboCard {
-    final isAcademyMode = widget.config.mode == SessionMode.drill ||
-                          widget.config.mode == SessionMode.addToArsenal;
-
-    if (!isAcademyMode) {
-      // Training mode: always show card
-      return true;
-    }
-
-    // Academy modes: show during rest, or when we have visible combo content
-    if (currentPhase == WorkoutPhase.rest) {
-      return true; // Show rest card
-    }
-
-    // Show combo card only if we've ever shown a combo, combo is visible, and we have content
-    return _hasEverShownACombo && _isComboVisible && _currentCombo != null;
-  }
-
   /// Determines whether the configuration summary card should be shown.
   ///
   /// In Academy modes (Drill/Arsenal) with only 1 round, hide the config card.
@@ -1626,11 +1597,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     // Add 1.0 to account for the current tick (timer will decrement on next tick)
     _comboHideDelaySeconds = newCombo.moveCodes.length <= 3 ? 2.0 : 3.0;
 
-    // Track that we've shown at least one combo (prevents empty card at start)
-    if (!_hasEverShownACombo) {
-      _hasEverShownACombo = true;
-    }
-
     // Immediately trigger voice for this new combo (event-driven, not timer-based)
     // This ensures voice speaks even for very short announce durations (<1s in drill mode)
     if (!isPaused && currentPhase == WorkoutPhase.round) {
@@ -1739,20 +1705,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       _buildTimer(),
                       const SizedBox(height: 24),
 
-                      // Combo display - mode-specific rendering
-                      if (widget.config.mode == SessionMode.training) ...[
-                        // Training mode: use card (existing behavior)
-                        if (_shouldShowComboCard) ...[
-                          _buildComboCard(),
-                          const SizedBox(height: 24),
-                        ],
-                      ] else ...[
-                        // Academy modes (Drill/Arsenal): inline text, no card
-                        _buildAcademyComboDisplay(),
-                        // Only add spacing if combo is actually rendered
-                        if (_currentCombo != null && _comboPhase != ComboPhase.idle && !_isInGetReadyDelay && currentPhase != WorkoutPhase.rest) ...[
-                          const SizedBox(height: 24),
-                        ],
+                      // Combo display - all modes use same inline rendering
+                      _buildAcademyComboDisplay(),
+                      // Only add spacing if combo is actually rendered
+                      if (_currentCombo != null && _comboPhase != ComboPhase.idle && !_isInGetReadyDelay && currentPhase != WorkoutPhase.rest) ...[
+                        const SizedBox(height: 24),
                       ],
 
                       // Configuration summary (conditionally shown)
@@ -1998,79 +1955,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
     // Otherwise show nothing
     return const SizedBox.shrink();
-  }
-
-  Widget _buildComboCard() {
-    // Determine what to display
-    String mainText;
-    String? secondaryText;
-
-    final isAcademyMode = widget.config.mode == SessionMode.drill ||
-                          widget.config.mode == SessionMode.addToArsenal;
-
-    if (currentPhase == WorkoutPhase.rest) {
-      // During rest phase
-      mainText = 'Rest';
-      secondaryText = null;
-    } else if (_currentCombo == null || _comboPhase == ComboPhase.idle || !_isComboVisible) {
-      // No active combo OR combo is hidden (academy modes hide after voice)
-      if (isAcademyMode) {
-        // Academy modes: show blank/empty instead of "Ready"
-        mainText = '';
-        secondaryText = null;
-      } else {
-        // Training mode: show "Ready"
-        mainText = 'Ready';
-        secondaryText = null;
-      }
-    } else {
-      // Active combo - display codes and names (only when visible)
-      final codes = _currentCombo!.moveCodes;
-
-      // Join codes with separator
-      mainText = codes.join(' – ');
-
-      // Resolve move names
-      final moveNames = codes.map((code) {
-        final move = _moveRepository.getMoveByCode(code);
-        return move?.name ?? code; // Fallback to code if not found
-      }).toList();
-
-      secondaryText = moveNames.join(' – ');
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Main text (codes or status)
-            Text(
-              mainText,
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.5,
-                    color: Colors.white,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            // Secondary text (move names)
-            if (secondaryText != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                secondaryText,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.6),
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildConfigItem(String label, String value) {
