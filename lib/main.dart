@@ -98,6 +98,13 @@ class FightMyShadowApp extends StatelessWidget {
   }
 }
 
+// Drill Session Result
+class DrillSessionResult {
+  final bool completed;
+
+  const DrillSessionResult({required this.completed});
+}
+
 // Workout Configuration Model
 class WorkoutConfiguration {
   final int rounds;
@@ -105,6 +112,8 @@ class WorkoutConfiguration {
   final int restDurationSeconds;
   final Difficulty difficulty;
   final Intensity intensity;
+  final bool isDrillMode;
+  final String? drillMoveCode; // Single move code for drill mode
 
   WorkoutConfiguration({
     required this.rounds,
@@ -112,7 +121,25 @@ class WorkoutConfiguration {
     required this.restDurationSeconds,
     required this.difficulty,
     required this.intensity,
+    this.isDrillMode = false,
+    this.drillMoveCode,
   });
+
+  /// Factory for creating a drill session configuration
+  factory WorkoutConfiguration.drill({
+    required String moveCode,
+    required Difficulty difficulty,
+  }) {
+    return WorkoutConfiguration(
+      rounds: 1,
+      roundDurationSeconds: 60,
+      restDurationSeconds: 0,
+      difficulty: difficulty,
+      intensity: Intensity.medium, // Fixed for drills
+      isDrillMode: true,
+      drillMoveCode: moveCode,
+    );
+  }
 }
 
 class HomeScreen extends StatefulWidget {
@@ -748,6 +775,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         // Finished the last round
         currentPhase = WorkoutPhase.complete;
         _timer?.cancel();
+
+        // In drill mode, auto-return after brief delay
+        if (widget.config.isDrillMode) {
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              _endWorkout(completed: true);
+            }
+          });
+        }
       }
     } else if (currentPhase == WorkoutPhase.rest) {
       // Just finished rest, move to next round
@@ -774,12 +810,54 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  void _endWorkout() {
+  void _endWorkout({bool completed = false}) {
     _timer?.cancel();
     _voiceController.stop();
     _clearCombo();
     _previousCombo = null;
-    Navigator.pop(context);
+
+    // For drill mode, return result to previous screen
+    if (widget.config.isDrillMode) {
+      Navigator.pop(context, DrillSessionResult(completed: completed));
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  Future<bool> _onWillPop() async {
+    // In drill mode, show confirmation if workout is in progress
+    if (widget.config.isDrillMode && currentPhase != WorkoutPhase.complete) {
+      final shouldExit = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          title: const Text('Exit drill?'),
+          content: const Text('Your drill won\'t count if you leave early.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Keep going'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Exit',
+                style: TextStyle(color: Colors.red.shade400),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldExit == true) {
+        _endWorkout(completed: false);
+      }
+
+      return false; // Prevent default back navigation
+    }
+
+    // For training mode, allow normal back navigation
+    return true;
   }
 
   String _formatTime(int seconds) {
@@ -867,10 +945,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
 
     // Generate a new combo
-    final newCombo = _comboGenerator.generateCombo(
-      difficulty: widget.config.difficulty,
-      previousCombo: _previousCombo,
-    );
+    final Combo newCombo;
+    if (widget.config.isDrillMode && widget.config.drillMoveCode != null) {
+      // In drill mode, create a simple combo with just the drill move
+      newCombo = Combo(
+        moveCodes: [widget.config.drillMoveCode!],
+        difficulty: widget.config.difficulty,
+        name: 'Drill Practice',
+      );
+    } else {
+      // Normal training mode - generate varied combos
+      newCombo = _comboGenerator.generateCombo(
+        difficulty: widget.config.difficulty,
+        previousCombo: _previousCombo,
+      );
+    }
 
     // Start the announce phase
     _currentCombo = newCombo;
@@ -936,7 +1025,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return _buildCompleteScreen();
     }
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -981,6 +1072,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -1009,7 +1101,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'WORKOUT IN PROGRESS',
+              widget.config.isDrillMode ? 'DRILL SESSION' : 'WORKOUT IN PROGRESS',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.w700,

@@ -51,25 +51,24 @@ class MoveDetailScreen extends StatelessWidget {
 
     if (targetLearningMove == null) return;
 
-    // For now, show a placeholder dialog and mark drill as complete
-    // TODO: Navigate to actual drill session screen
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Drill Session'),
-        content: Text('Drill session for ${move.name} completed!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+    // Launch drill session with this move
+    final config = WorkoutConfiguration.drill(
+      moveCode: move.code,
+      difficulty: Difficulty.beginner, // Always beginner for learning drills
+    );
+
+    final result = await Navigator.push<DrillSessionResult>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WorkoutScreen(config: config),
       ),
     );
 
-    // Mark drill as done
-    final controller = context.read<StoryModeController>();
-    await controller.markDrillDone(targetLearningMove.id);
+    // If drill was completed, mark it as done
+    if (result != null && result.completed) {
+      final controller = context.read<StoryModeController>();
+      await controller.markDrillDone(targetLearningMove.id);
+    }
   }
 
   void _handleAddToArsenal(BuildContext context) async {
