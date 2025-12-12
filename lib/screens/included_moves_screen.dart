@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/controllers/training_preferences_controller.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
-import 'package:fight_my_shadow/domain/learning/learning_path.dart';
-import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
+import 'package:fight_my_shadow/data/boxing_moves_data.dart';
 
 /// Screen for selecting which unlocked moves to include in Training Sessions.
 ///
@@ -18,9 +17,9 @@ import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 class IncludedMovesScreen extends StatelessWidget {
   const IncludedMovesScreen({super.key});
 
-  // Training theme colors (red)
-  static const _trainingPrimary = Color(0xFFD32F2F); // Red 700
-  static const _trainingSecondary = Color(0xFFE57373); // Red 300
+  // Included Moves theme colors (blue)
+  static const _includedMovesPrimary = Color(0xFF1976D2); // Blue 700
+  static const _includedMovesSecondary = Color(0xFF42A5F5); // Blue 400
 
   // Academy theme colors (purple)
   static const _academyPrimary = Color(0xFF9C27B0); // Purple 500
@@ -33,12 +32,18 @@ class IncludedMovesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final trainingController = Provider.of<TrainingPreferencesController>(context);
     final storyController = Provider.of<StoryModeController>(context);
-    final moveRepository = Provider.of<MoveRepository>(context);
 
-    // Get all moves in Academy order
-    final allLearningMoves = LearningPath.getAllMoves();
     final learningState = storyController.state;
     final currentMove = learningState.currentMove;
+
+    // Get all moves in Academy order
+    final allMovesOrdered = getMovesInAcademyOrder();
+
+    // Group by category while preserving Academy order within each category
+    final punches = allMovesOrdered.where((m) => m.category == MoveCategory.punch).toList();
+    final defense = allMovesOrdered.where((m) => m.category == MoveCategory.defense).toList();
+    final footwork = allMovesOrdered.where((m) => m.category == MoveCategory.footwork).toList();
+    final deception = allMovesOrdered.where((m) => m.category == MoveCategory.deception).toList();
 
     return Scaffold(
       body: SafeArea(
@@ -47,39 +52,98 @@ class IncludedMovesScreen extends StatelessWidget {
             // Header
             _buildHeader(context, trainingController),
 
-            // Move list
+            // Move list with category sections
             Expanded(
-              child: ListView.builder(
+              child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                itemCount: allLearningMoves.length,
-                itemBuilder: (context, index) {
-                  final learningMove = allLearningMoves[index];
+                children: [
+                  // Punches section
+                  _buildSectionHeader(context, 'Punches', punches.length),
+                  ...punches.map((move) {
+                    final unlockState = MoveLockStatusResolver.getUnlockState(
+                      move.code,
+                      learningState,
+                      currentMove,
+                    );
+                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                    final isIncluded = trainingController.isIncluded(move.code);
 
-                  // Get the first move code for this learning move
-                  final moveCode = learningMove.moveCodes.first;
-                  final move = moveRepository.getMoveByCode(moveCode);
+                    return _buildMoveRow(
+                      context,
+                      trainingController: trainingController,
+                      move: move,
+                      isUnlocked: isUnlocked,
+                      isIncluded: isIncluded,
+                      moveCode: move.code,
+                    );
+                  }),
+                  const SizedBox(height: 16),
 
-                  if (move == null) return const SizedBox.shrink();
+                  // Defense section
+                  _buildSectionHeader(context, 'Defense', defense.length),
+                  ...defense.map((move) {
+                    final unlockState = MoveLockStatusResolver.getUnlockState(
+                      move.code,
+                      learningState,
+                      currentMove,
+                    );
+                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                    final isIncluded = trainingController.isIncluded(move.code);
 
-                  // Determine unlock state
-                  final unlockState = MoveLockStatusResolver.getUnlockState(
-                    moveCode,
-                    learningState,
-                    currentMove,
-                  );
+                    return _buildMoveRow(
+                      context,
+                      trainingController: trainingController,
+                      move: move,
+                      isUnlocked: isUnlocked,
+                      isIncluded: isIncluded,
+                      moveCode: move.code,
+                    );
+                  }),
+                  const SizedBox(height: 16),
 
-                  final isUnlocked = unlockState == MoveUnlockState.unlocked;
-                  final isIncluded = trainingController.isIncluded(moveCode);
+                  // Footwork section
+                  _buildSectionHeader(context, 'Footwork', footwork.length),
+                  ...footwork.map((move) {
+                    final unlockState = MoveLockStatusResolver.getUnlockState(
+                      move.code,
+                      learningState,
+                      currentMove,
+                    );
+                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                    final isIncluded = trainingController.isIncluded(move.code);
 
-                  return _buildMoveRow(
-                    context,
-                    trainingController: trainingController,
-                    move: move,
-                    isUnlocked: isUnlocked,
-                    isIncluded: isIncluded,
-                    moveCode: moveCode,
-                  );
-                },
+                    return _buildMoveRow(
+                      context,
+                      trainingController: trainingController,
+                      move: move,
+                      isUnlocked: isUnlocked,
+                      isIncluded: isIncluded,
+                      moveCode: move.code,
+                    );
+                  }),
+                  const SizedBox(height: 16),
+
+                  // Deception section
+                  _buildSectionHeader(context, 'Deception', deception.length),
+                  ...deception.map((move) {
+                    final unlockState = MoveLockStatusResolver.getUnlockState(
+                      move.code,
+                      learningState,
+                      currentMove,
+                    );
+                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                    final isIncluded = trainingController.isIncluded(move.code);
+
+                    return _buildMoveRow(
+                      context,
+                      trainingController: trainingController,
+                      move: move,
+                      isUnlocked: isUnlocked,
+                      isIncluded: isIncluded,
+                      moveCode: move.code,
+                    );
+                  }),
+                ],
               ),
             ),
 
@@ -99,13 +163,13 @@ class IncludedMovesScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _trainingPrimary,
-            _trainingSecondary.withValues(alpha: 0.8),
+            _includedMovesPrimary,
+            _includedMovesSecondary.withValues(alpha: 0.8),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: _trainingPrimary.withValues(alpha: 0.3),
+            color: _includedMovesPrimary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -202,6 +266,41 @@ class IncludedMovesScreen extends StatelessWidget {
                       ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      child: Row(
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: _includedMovesPrimary,
+                ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: _includedMovesPrimary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$count',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: _includedMovesPrimary,
+                  ),
             ),
           ),
         ],
@@ -625,6 +724,25 @@ class _ModernErrorOverlayState extends State<_ModernErrorOverlay>
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
                           height: 1.3,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Close icon button
+                    GestureDetector(
+                      onTap: () {
+                        _controller.reverse().then((_) => widget.onDismiss());
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 18,
                         ),
                       ),
                     ),

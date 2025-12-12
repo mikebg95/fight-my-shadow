@@ -764,18 +764,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.red.shade700,
-                      Colors.red.shade800,
+                      Colors.blue.shade700,
+                      Colors.blue.shade800,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.red.shade600.withValues(alpha: 0.5),
+                    color: Colors.blue.shade600.withValues(alpha: 0.5),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.red.shade600.withValues(alpha: 0.3),
+                      color: Colors.blue.shade600.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
