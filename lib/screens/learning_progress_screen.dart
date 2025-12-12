@@ -22,8 +22,27 @@ const _academySecondary = Color(0xFFBA68C8); // Purple 300
 /// - All learning moves grouped by level (1-12), using actual Move objects from repository
 /// - Status for each move (Locked / Ready to Unlock / Unlocked) using same logic as Library
 /// - Large CTA button reflecting the next action (Drill/Progression/Exam/Complete)
-class LearningProgressScreen extends StatelessWidget {
+class LearningProgressScreen extends StatefulWidget {
   const LearningProgressScreen({super.key});
+
+  @override
+  State<LearningProgressScreen> createState() => _LearningProgressScreenState();
+}
+
+class _LearningProgressScreenState extends State<LearningProgressScreen> {
+  late final AccordionController _accordionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _accordionController = AccordionController();
+  }
+
+  @override
+  void dispose() {
+    _accordionController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +71,7 @@ class LearningProgressScreen extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     // Moves list grouped by level
-                    _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
+                    _buildMovesListByLevel(context, allLearningMoves, repository, learningState, _accordionController),
                     const SizedBox(height: 100), // Space for CTA button
                   ],
                 ),
@@ -306,6 +325,7 @@ class LearningProgressScreen extends StatelessWidget {
     List<LearningMove> allLearningMoves,
     MoveRepository repository,
     LearningState learningState,
+    AccordionController accordionController,
   ) {
     // Group learning moves by level
     final movesByLevel = <int, List<LearningMove>>{};
@@ -325,7 +345,7 @@ class LearningProgressScreen extends StatelessWidget {
           // Sort moves by orderInLevel
           learningMoves.sort((a, b) => a.orderInLevel.compareTo(b.orderInLevel));
 
-          return _buildLevelSection(context, level, learningMoves, repository, learningState);
+          return _buildLevelSection(context, level, learningMoves, repository, learningState, accordionController);
         }).toList(),
       ),
     );
@@ -337,6 +357,7 @@ class LearningProgressScreen extends StatelessWidget {
     List<LearningMove> learningMoves,
     MoveRepository repository,
     LearningState learningState,
+    AccordionController accordionController,
   ) {
     // Get level name from first move
     final levelName = learningMoves.first.levelName;
@@ -363,6 +384,8 @@ class LearningProgressScreen extends StatelessWidget {
       subtitle: subtitle,
       accentColor: _academyPrimary,
       initiallyExpanded: isCurrentLevel,
+      accordionController: accordionController,
+      sectionId: level, // Use level number as unique ID
       children: learningMoves.map((learningMove) =>
         _buildMoveRow(context, learningMove, repository, learningState)).toList(),
     );

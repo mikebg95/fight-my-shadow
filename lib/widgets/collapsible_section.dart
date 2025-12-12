@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
 
+/// Controller for managing accordion behavior (only one section open at a time).
+///
+/// Each page should create one AccordionController and share it among all
+/// CollapsibleSection widgets to ensure only one section is expanded at a time.
+class AccordionController extends ChangeNotifier {
+  Object? _expandedId;
+
+  Object? get expandedId => _expandedId;
+
+  /// Sets which section is currently expanded (by its unique ID).
+  /// Pass null to collapse all sections.
+  void setExpanded(Object? id) {
+    if (_expandedId != id) {
+      _expandedId = id;
+      notifyListeners();
+    }
+  }
+
+  /// Toggles a section: expands it if collapsed, collapses it if already expanded.
+  void toggle(Object id) {
+    if (_expandedId == id) {
+      setExpanded(null); // Collapse current
+    } else {
+      setExpanded(id); // Expand new
+    }
+  }
+}
+
 /// A reusable collapsible section widget (accordion) with customizable styling.
 ///
 /// Used in Academy (levels), Library (categories), and Included Moves (categories).
+/// Supports true accordion behavior via optional AccordionController.
 class CollapsibleSection extends StatefulWidget {
   /// The title displayed in the header
   final String title;
@@ -25,6 +54,14 @@ class CollapsibleSection extends StatefulWidget {
   /// Optional callback when expansion state changes
   final ValueChanged<bool>? onExpansionChanged;
 
+  /// Optional accordion controller for true accordion behavior (only one open at a time).
+  /// If provided, this section will coordinate with other sections using the same controller.
+  final AccordionController? accordionController;
+
+  /// Unique identifier for this section (required if using accordionController).
+  /// Can be any object (String, int, enum, etc.).
+  final Object? sectionId;
+
   const CollapsibleSection({
     super.key,
     required this.title,
@@ -34,6 +71,8 @@ class CollapsibleSection extends StatefulWidget {
     this.initiallyExpanded = false,
     required this.children,
     this.onExpansionChanged,
+    this.accordionController,
+    this.sectionId,
   });
 
   @override
@@ -42,14 +81,12 @@ class CollapsibleSection extends StatefulWidget {
 
 class _CollapsibleSectionState extends State<CollapsibleSection>
     with SingleTickerProviderStateMixin {
-  late bool _isExpanded;
   late AnimationController _controller;
   late Animation<double> _iconRotation;
 
   @override
   void initState() {
     super.initState();
-    _isExpanded = widget.initiallyExpanded;
 
     _controller = AnimationController(
       duration: const Duration(milliseconds: 200),
@@ -64,27 +101,74 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
       curve: Curves.easeInOut,
     ));
 
-    if (_isExpanded) {
-      _controller.value = 1.0;
+    // Set initial expansion state
+    if (widget.accordionController != null) {
+      // With accordion controller: check if this section should be initially expanded
+      if (widget.initiallyExpanded && widget.sectionId != null) {
+        widget.accordionController!.setExpanded(widget.sectionId);
+      }
+      // Listen to controller changes
+      widget.accordionController!.addListener(_onAccordionChanged);
+      // Sync initial state
+      _syncExpansionState();
+    } else {
+      // Without accordion controller: use local state
+      if (widget.initiallyExpanded) {
+        _controller.value = 1.0;
+      }
     }
   }
 
   @override
   void dispose() {
+    widget.accordionController?.removeListener(_onAccordionChanged);
     _controller.dispose();
     super.dispose();
   }
 
+  /// Called when accordion controller changes (another section was opened/closed)
+  void _onAccordionChanged() {
+    _syncExpansionState();
+  }
+
+  /// Syncs the visual expansion state with the accordion controller
+  void _syncExpansionState() {
+    if (widget.accordionController == null) return;
+
+    final shouldBeExpanded = widget.accordionController!.expandedId == widget.sectionId;
+    final currentlyExpanded = _controller.value > 0.5;
+
+    if (shouldBeExpanded && !currentlyExpanded) {
+      _controller.forward();
+      widget.onExpansionChanged?.call(true);
+    } else if (!shouldBeExpanded && currentlyExpanded) {
+      _controller.reverse();
+      widget.onExpansionChanged?.call(false);
+    }
+  }
+
   void _toggleExpanded() {
-    setState(() {
-      _isExpanded = !_isExpanded;
-      if (_isExpanded) {
-        _controller.forward();
-      } else {
+    if (widget.accordionController != null && widget.sectionId != null) {
+      // Accordion mode: let controller handle state
+      widget.accordionController!.toggle(widget.sectionId!);
+    } else {
+      // Standalone mode: toggle local state
+      final wasExpanded = _controller.value > 0.5;
+      if (wasExpanded) {
         _controller.reverse();
+        widget.onExpansionChanged?.call(false);
+      } else {
+        _controller.forward();
+        widget.onExpansionChanged?.call(true);
       }
-      widget.onExpansionChanged?.call(_isExpanded);
-    });
+    }
+  }
+
+  bool get _isExpanded {
+    if (widget.accordionController != null) {
+      return widget.accordionController!.expandedId == widget.sectionId;
+    }
+    return _controller.value > 0.5;
   }
 
   @override
