@@ -53,7 +53,7 @@ class LearningProgressScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     // Global progress section
-                    _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves),
+                    _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
                     const SizedBox(height: 24),
 
                     // Moves list grouped by level
@@ -157,8 +157,19 @@ class LearningProgressScreen extends StatelessWidget {
     BuildContext context,
     int unlockedCount,
     int totalMoves,
+    LearningState learningState,
   ) {
     final progress = unlockedCount / totalMoves;
+    final currentMove = learningState.currentMove;
+
+    // Determine current level text
+    String currentLevelText;
+    if (currentMove != null) {
+      currentLevelText = 'Current level: LEVEL ${currentMove.level} – ${currentMove.levelName}';
+    } else {
+      // Learning complete
+      currentLevelText = 'Academy Complete';
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -168,12 +179,13 @@ class LearningProgressScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title and subtitle
+              // Current level indicator
               Text(
-                'YOUR PROGRESS',
+                currentLevelText,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      letterSpacing: 1.5,
-                      fontSize: 12,
+                      letterSpacing: 0.5,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
                       color: _academyPrimary,
                     ),
               ),

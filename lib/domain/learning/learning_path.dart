@@ -8,8 +8,9 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 /// that users progress through in Academy. Each learning move maps to
 /// underlying Move codes from the main move system.
 ///
-/// The learning path is organized into 12 levels:
-/// 1. Foundation Fists (4 moves)
+/// The learning path is organized into 13 levels:
+/// 0. The First Bell (1 move) - Beginner onboarding
+/// 1. Foundation Fists (3 moves)
 /// 2. Rails & Shields (4 moves)
 /// 3. Hook City (4 moves)
 /// 4. Turn the Corner (2 moves)
@@ -27,20 +28,22 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 class LearningPath {
   /// The complete, ordered list of all 38 learning moves.
   static const List<LearningMove> _allMoves = [
-    // ========== LEVEL 1: Foundation Fists (4 moves) ==========
+    // ========== LEVEL 0: The First Bell (1 move) ==========
     LearningMove(
       id: 1,
-      level: 1,
+      level: 0,
       orderInLevel: 0,
       displayName: 'Jab',
       description:
           'The jab is your most important punch. A quick, straight punch thrown with your lead hand. Use it to measure distance, set up combinations, and keep your opponent at bay.',
       moveCodes: ['1'],
     ),
+
+    // ========== LEVEL 1: Foundation Fists (3 moves) ==========
     LearningMove(
       id: 2,
       level: 1,
-      orderInLevel: 1,
+      orderInLevel: 0,
       displayName: 'Cross',
       description:
           'A powerful straight punch thrown with your rear hand. One of your most powerful weapons, generating force through hip and shoulder rotation.',
@@ -49,7 +52,7 @@ class LearningPath {
     LearningMove(
       id: 3,
       level: 1,
-      orderInLevel: 2,
+      orderInLevel: 1,
       displayName: 'Step in',
       description:
           'Moving forward by stepping with your lead foot first, then following with your rear foot. Essential for closing distance and adding power to your punches.',
@@ -58,7 +61,7 @@ class LearningPath {
     LearningMove(
       id: 4,
       level: 1,
-      orderInLevel: 3,
+      orderInLevel: 2,
       displayName: 'Step back',
       description:
           'Moving backward by stepping with your rear foot first, then following with your lead foot. Critical for creating space and avoiding pressure.',
@@ -428,7 +431,7 @@ class LearningPath {
   static int get totalMoves => _allMoves.length;
 
   /// Returns the total number of levels.
-  static const int totalLevels = 12;
+  static const int totalLevels = 13;
 
   /// Returns the number of moves in a given level.
   ///
