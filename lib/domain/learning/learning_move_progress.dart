@@ -1,11 +1,12 @@
 /// Represents the learning progress for a single LearningMove.
 ///
-/// This tracks completion status for the three stages of learning a move:
+/// This tracks completion status for the stages of learning a move:
 /// 1. Drill - initial focused practice
-/// 2. Progression - applying the move in workout sessions
-/// 3. Exam - testing mastery of the move
+/// 2. Add to Arsenal - integrate the move with unlocked moves
+/// 3. Progression - applying the move in workout sessions (future)
+/// 4. Exam - testing mastery of the move (future)
 ///
-/// When all three stages are complete, the move is unlocked and the user
+/// When all stages are complete, the move is unlocked and the user
 /// advances to the next move in the learning path.
 class LearningMoveProgress {
   /// The ID of the LearningMove this progress refers to (1-38).
@@ -15,6 +16,12 @@ class LearningMoveProgress {
   ///
   /// Drills introduce the move with focused, repetitive practice.
   final bool drillDone;
+
+  /// Whether the Add to Arsenal session for this move has been completed.
+  ///
+  /// Add to Arsenal integrates the newly drilled move with previously
+  /// unlocked moves through weighted practice sessions.
+  final bool addToArsenalDone;
 
   /// Number of Progression sessions completed for this move.
   ///
@@ -31,8 +38,9 @@ class LearningMoveProgress {
   ///
   /// A move is unlocked when:
   /// - Drill is done
-  /// - Required progression sessions are complete
-  /// - Exam is passed
+  /// - Add to Arsenal is done
+  /// - Required progression sessions are complete (future)
+  /// - Exam is passed (future)
   ///
   /// When unlocked, the user advances to the next move.
   final bool isUnlocked;
@@ -40,6 +48,7 @@ class LearningMoveProgress {
   const LearningMoveProgress({
     required this.moveId,
     required this.drillDone,
+    required this.addToArsenalDone,
     required this.progressionSessionsDone,
     required this.examPassed,
     required this.isUnlocked,
@@ -50,6 +59,7 @@ class LearningMoveProgress {
     return LearningMoveProgress(
       moveId: moveId,
       drillDone: false,
+      addToArsenalDone: false,
       progressionSessionsDone: 0,
       examPassed: false,
       isUnlocked: false,
@@ -60,6 +70,7 @@ class LearningMoveProgress {
   LearningMoveProgress copyWith({
     int? moveId,
     bool? drillDone,
+    bool? addToArsenalDone,
     int? progressionSessionsDone,
     bool? examPassed,
     bool? isUnlocked,
@@ -67,6 +78,7 @@ class LearningMoveProgress {
     return LearningMoveProgress(
       moveId: moveId ?? this.moveId,
       drillDone: drillDone ?? this.drillDone,
+      addToArsenalDone: addToArsenalDone ?? this.addToArsenalDone,
       progressionSessionsDone:
           progressionSessionsDone ?? this.progressionSessionsDone,
       examPassed: examPassed ?? this.examPassed,
@@ -81,6 +93,7 @@ class LearningMoveProgress {
           runtimeType == other.runtimeType &&
           moveId == other.moveId &&
           drillDone == other.drillDone &&
+          addToArsenalDone == other.addToArsenalDone &&
           progressionSessionsDone == other.progressionSessionsDone &&
           examPassed == other.examPassed &&
           isUnlocked == other.isUnlocked;
@@ -89,6 +102,7 @@ class LearningMoveProgress {
   int get hashCode => Object.hash(
         moveId,
         drillDone,
+        addToArsenalDone,
         progressionSessionsDone,
         examPassed,
         isUnlocked,
@@ -96,13 +110,14 @@ class LearningMoveProgress {
 
   @override
   String toString() =>
-      'LearningMoveProgress(moveId: $moveId, drill: $drillDone, progression: $progressionSessionsDone, exam: $examPassed, unlocked: $isUnlocked)';
+      'LearningMoveProgress(moveId: $moveId, drill: $drillDone, arsenal: $addToArsenalDone, progression: $progressionSessionsDone, exam: $examPassed, unlocked: $isUnlocked)';
 
   /// Converts this progress to a JSON map for persistence.
   Map<String, dynamic> toJson() {
     return {
       'moveId': moveId,
       'drillDone': drillDone,
+      'addToArsenalDone': addToArsenalDone,
       'progressionSessionsDone': progressionSessionsDone,
       'examPassed': examPassed,
       'isUnlocked': isUnlocked,
@@ -110,10 +125,12 @@ class LearningMoveProgress {
   }
 
   /// Creates a LearningMoveProgress from a JSON map.
+  /// Handles migration from older versions without addToArsenalDone field.
   factory LearningMoveProgress.fromJson(Map<String, dynamic> json) {
     return LearningMoveProgress(
       moveId: json['moveId'] as int,
       drillDone: json['drillDone'] as bool,
+      addToArsenalDone: json['addToArsenalDone'] as bool? ?? false, // Migration: default to false for old saves
       progressionSessionsDone: json['progressionSessionsDone'] as int,
       examPassed: json['examPassed'] as bool,
       isUnlocked: json['isUnlocked'] as bool,

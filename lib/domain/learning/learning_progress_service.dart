@@ -100,6 +100,23 @@ class LearningProgressService {
     return state.updateMoveProgress(currentMove.id, updatedProgress);
   }
 
+  /// Marks the Add to Arsenal session as completed for a specific move.
+  ///
+  /// Returns updated state with addToArsenalDone set to true.
+  /// If this is the last required step, also marks the move as unlocked.
+  static LearningState completeAddToArsenal(LearningState state, int moveId) {
+    final progress = state.getProgressForMove(moveId);
+    if (progress == null) return state;
+
+    // For now, completing Add to Arsenal unlocks the move
+    // Later we can add progression sessions and exams as additional requirements
+    final updatedProgress = progress.copyWith(
+      addToArsenalDone: true,
+      isUnlocked: true, // Auto-unlock after Add to Arsenal
+    );
+    return state.updateMoveProgress(moveId, updatedProgress);
+  }
+
   /// Increments the progression sessions count for the current move.
   ///
   /// Returns updated state with progressionSessionsDone incremented by 1.

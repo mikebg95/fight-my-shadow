@@ -75,6 +75,15 @@ class StoryModeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Marks the Add to Arsenal session as completed for a specific learning move.
+  ///
+  /// This is called after the user successfully completes the Arsenal integration session.
+  Future<void> markAddToArsenalDone(int moveId) async {
+    _state = LearningProgressService.completeAddToArsenal(_state, moveId);
+    await _repository.save(_state);
+    notifyListeners();
+  }
+
   /// Marks a progression session as completed for the current move.
   ///
   /// Used for the full drill/progression/exam flow (not yet implemented).
