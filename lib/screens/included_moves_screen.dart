@@ -26,6 +26,9 @@ class IncludedMovesScreen extends StatelessWidget {
   static const _academyPrimary = Color(0xFF9C27B0); // Purple 500
   static const _academySecondary = Color(0xFFBA68C8); // Purple 300
 
+  // Static overlay entry to prevent stacking
+  static OverlayEntry? _currentOverlay;
+
   @override
   Widget build(BuildContext context) {
     final trainingController = Provider.of<TrainingPreferencesController>(context);
@@ -218,13 +221,7 @@ class IncludedMovesScreen extends StatelessWidget {
     void handleToggle() {
       // If this is included and it's the last one, prevent deselection
       if (isIncluded && trainingController.includedCount == 1) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('You must include at least one move'),
-            backgroundColor: _trainingPrimary,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        _showModernError(context);
         return;
       }
 
@@ -466,6 +463,175 @@ class IncludedMovesScreen extends StatelessWidget {
                 size: 18,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Shows a modern, sleek error overlay when user tries to deselect all moves.
+  /// Dismisses automatically after 2 seconds.
+  /// Only one overlay can be shown at a time (prevents stacking).
+  void _showModernError(BuildContext context) {
+    // Remove existing overlay if present
+    _currentOverlay?.remove();
+    _currentOverlay = null;
+
+    // Create new overlay entry
+    late OverlayEntry overlay;
+    overlay = OverlayEntry(
+      builder: (context) => _ModernErrorOverlay(
+        message: 'At least one move must be included',
+        onDismiss: () {
+          overlay.remove();
+          _currentOverlay = null;
+        },
+      ),
+    );
+
+    // Store reference and insert
+    _currentOverlay = overlay;
+    Overlay.of(context).insert(overlay);
+
+    // Auto-dismiss after 2 seconds
+    Future.delayed(const Duration(milliseconds: 2000), () {
+      if (_currentOverlay == overlay) {
+        overlay.remove();
+        _currentOverlay = null;
+      }
+    });
+  }
+}
+
+/// Modern, sleek error overlay widget that matches the app's design language.
+/// Features smooth animations, glassmorphic design, and tap-to-dismiss.
+class _ModernErrorOverlay extends StatefulWidget {
+  final String message;
+  final VoidCallback onDismiss;
+
+  const _ModernErrorOverlay({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_ModernErrorOverlay> createState() => _ModernErrorOverlayState();
+}
+
+class _ModernErrorOverlayState extends State<_ModernErrorOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    );
+
+    _opacityAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const errorColor = Color(0xFFD32F2F); // Training red
+
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 20,
+      left: 20,
+      right: 20,
+      child: FadeTransition(
+        opacity: _opacityAnimation,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: GestureDetector(
+            onTap: () {
+              // Dismiss on tap
+              _controller.reverse().then((_) => widget.onDismiss());
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      errorColor,
+                      errorColor.withValues(alpha: 0.9),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: errorColor.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Warning icon
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.warning_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Message text
+                    Expanded(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
