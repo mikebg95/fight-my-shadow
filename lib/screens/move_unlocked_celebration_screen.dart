@@ -86,14 +86,22 @@ class _MoveUnlockedCelebrationScreenState
   }
 
   void _navigateBack() {
-    // Navigate directly to Academy screen (LearningProgressScreen)
-    // Use pushAndRemoveUntil to guarantee we land on Academy, not Home
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const LearningProgressScreen(),
-      ),
-      (route) => false, // Remove all previous routes
-    );
+    // Simply pop back to the calling screen
+    // The calling screen (move_detail_screen) will handle:
+    // 1. Checking if level is complete
+    // 2. Showing level celebration if needed
+    // 3. Navigating to Academy after all celebrations
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      // Fallback: Navigate directly to Academy if we can't pop
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const LearningProgressScreen(),
+        ),
+        (route) => false,
+      );
+    }
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
+import 'package:fight_my_shadow/domain/learning/learning_state.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/controllers/training_preferences_controller.dart';
@@ -10,6 +11,8 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/screens/academy_exam_screen.dart';
 import 'package:fight_my_shadow/screens/move_unlocked_celebration_screen.dart';
+import 'package:fight_my_shadow/screens/level_complete_celebration_screen.dart';
+import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 
 /// Screen that displays detailed information about a single move.
 ///
@@ -20,6 +23,16 @@ class MoveDetailScreen extends StatelessWidget {
   final Move move;
 
   const MoveDetailScreen({super.key, required this.move});
+
+  /// Checks if all moves in a given level are unlocked.
+  /// Returns true if the level is complete (all moves unlocked).
+  bool _isLevelComplete(int level, LearningState learningState) {
+    final movesInLevel = LearningPath.getMovesByLevel(level);
+    return movesInLevel.every((lm) {
+      final progress = learningState.getProgressForMove(lm.id);
+      return progress != null && progress.isUnlocked;
+    });
+  }
 
   void _handleUnlock(BuildContext context) async {
     // Find the LearningMove that corresponds to this Move
@@ -131,6 +144,10 @@ class MoveDetailScreen extends StatelessWidget {
         // Unlock the move
         await controller.markExamPassed(targetLearningMove.id);
 
+        // Get the level of the just-unlocked move (for level completion check)
+        final unlockedMoveLevel = targetLearningMove.level;
+        final unlockedMoveLevelName = targetLearningMove.levelName;
+
         // Sync training preferences to include Jab
         if (context.mounted) {
           final trainingController = Provider.of<TrainingPreferencesController>(
@@ -158,6 +175,36 @@ class MoveDetailScreen extends StatelessWidget {
                 settings: const RouteSettings(name: '/celebration'),
               ),
             );
+
+            // After move celebration, check if the LEVEL is now complete
+            if (context.mounted) {
+              final updatedState = context.read<StoryModeController>().state;
+
+              if (_isLevelComplete(unlockedMoveLevel, updatedState)) {
+                // Show the LEVEL COMPLETE celebration!
+                // This will navigate to Academy when done
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LevelCompleteCelebrationScreen(
+                      levelNumber: unlockedMoveLevel,
+                      levelName: unlockedMoveLevelName,
+                    ),
+                    settings: const RouteSettings(name: '/level-celebration'),
+                  ),
+                );
+              } else {
+                // No level complete, navigate to Academy now
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const LearningProgressScreen(),
+                    ),
+                    (route) => false,
+                  );
+                }
+              }
+            }
           }
         }
       }
@@ -215,6 +262,10 @@ class MoveDetailScreen extends StatelessWidget {
     if (result != null && result.passed && targetLearningMove != null) {
       await controller.markExamPassed(targetLearningMove.id);
 
+      // Get the level of the just-unlocked move (for level completion check)
+      final unlockedMoveLevel = targetLearningMove.level;
+      final unlockedMoveLevelName = targetLearningMove.levelName;
+
       // Sync training preferences to auto-include the newly unlocked move
       if (context.mounted) {
         final trainingController = Provider.of<TrainingPreferencesController>(
@@ -223,7 +274,7 @@ class MoveDetailScreen extends StatelessWidget {
         );
         await trainingController.syncWithLearningState(controller.state);
 
-        // Show celebration screen
+        // Show move unlock celebration screen
         if (context.mounted) {
           // Find the next move for "Next up" text
           String? nextMoveName;
@@ -245,6 +296,38 @@ class MoveDetailScreen extends StatelessWidget {
               settings: const RouteSettings(name: '/celebration'),
             ),
           );
+
+          // After move celebration, check if the LEVEL is now complete
+          // (all moves in that level are unlocked)
+          if (context.mounted) {
+            // Re-read the learning state after the celebration
+            final updatedState = context.read<StoryModeController>().state;
+
+            if (_isLevelComplete(unlockedMoveLevel, updatedState)) {
+              // Show the LEVEL COMPLETE celebration!
+              // This will navigate to Academy when done
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LevelCompleteCelebrationScreen(
+                    levelNumber: unlockedMoveLevel,
+                    levelName: unlockedMoveLevelName,
+                  ),
+                  settings: const RouteSettings(name: '/level-celebration'),
+                ),
+              );
+            } else {
+              // No level complete, navigate to Academy now
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const LearningProgressScreen(),
+                  ),
+                  (route) => false,
+                );
+              }
+            }
+          }
         }
       }
     }
