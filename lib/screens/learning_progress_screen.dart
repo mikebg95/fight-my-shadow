@@ -254,15 +254,19 @@ class LearningProgressScreen extends StatelessWidget {
     // Determine if this level should be initially expanded
     // Only expand the level that contains the current move
     final currentMove = learningState.currentMove;
-    final containsCurrentMove = learningMoves.any((lm) {
-      return lm.moveCodes.contains(currentMove);
-    });
+    final isCurrentLevel = currentMove != null && currentMove.level == level;
+
+    // Build title with "In Progress" indicator if this is the current level
+    final titleText = 'LEVEL $level — $levelName';
+    final subtitle = isCurrentLevel
+        ? '🔥 In Progress · $unlockedInLevel/${learningMoves.length} unlocked'
+        : '$unlockedInLevel/${learningMoves.length} unlocked';
 
     return CollapsibleSection(
-      title: 'LEVEL $level — $levelName',
-      subtitle: '$unlockedInLevel/${learningMoves.length} unlocked',
+      title: titleText,
+      subtitle: subtitle,
       accentColor: _academyPrimary,
-      initiallyExpanded: containsCurrentMove,
+      initiallyExpanded: isCurrentLevel,
       children: learningMoves.map((learningMove) =>
         _buildMoveRow(context, learningMove, repository, learningState)).toList(),
     );
