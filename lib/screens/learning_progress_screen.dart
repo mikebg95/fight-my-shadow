@@ -22,27 +22,8 @@ const _academySecondary = Color(0xFFBA68C8); // Purple 300
 /// - All learning moves grouped by level (1-12), using actual Move objects from repository
 /// - Status for each move (Locked / Ready to Unlock / Unlocked) using same logic as Library
 /// - Large CTA button reflecting the next action (Drill/Progression/Exam/Complete)
-class LearningProgressScreen extends StatefulWidget {
+class LearningProgressScreen extends StatelessWidget {
   const LearningProgressScreen({super.key});
-
-  @override
-  State<LearningProgressScreen> createState() => _LearningProgressScreenState();
-}
-
-class _LearningProgressScreenState extends State<LearningProgressScreen> {
-  late final AccordionController _accordionController;
-
-  @override
-  void initState() {
-    super.initState();
-    _accordionController = AccordionController();
-  }
-
-  @override
-  void dispose() {
-    _accordionController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +52,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
                     const SizedBox(height: 16),
 
                     // Moves list grouped by level
-                    _buildMovesListByLevel(context, allLearningMoves, repository, learningState, _accordionController),
+                    _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
                   ],
                 ),
@@ -325,7 +306,6 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
     List<LearningMove> allLearningMoves,
     MoveRepository repository,
     LearningState learningState,
-    AccordionController accordionController,
   ) {
     // Group learning moves by level
     final movesByLevel = <int, List<LearningMove>>{};
@@ -345,7 +325,7 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
           // Sort moves by orderInLevel
           learningMoves.sort((a, b) => a.orderInLevel.compareTo(b.orderInLevel));
 
-          return _buildLevelSection(context, level, learningMoves, repository, learningState, accordionController);
+          return _buildLevelSection(context, level, learningMoves, repository, learningState);
         }).toList(),
       ),
     );
@@ -357,7 +337,6 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
     List<LearningMove> learningMoves,
     MoveRepository repository,
     LearningState learningState,
-    AccordionController accordionController,
   ) {
     // Get level name from first move
     final levelName = learningMoves.first.levelName;
@@ -384,8 +363,6 @@ class _LearningProgressScreenState extends State<LearningProgressScreen> {
       subtitle: subtitle,
       accentColor: _academyPrimary,
       initiallyExpanded: isCurrentLevel,
-      accordionController: accordionController,
-      sectionId: level, // Use level number as unique ID
       children: learningMoves.map((learningMove) =>
         _buildMoveRow(context, learningMove, repository, learningState)).toList(),
     );

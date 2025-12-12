@@ -17,27 +17,8 @@ import 'package:fight_my_shadow/widgets/collapsible_section.dart';
 /// Moves are ordered according to the Academy learning path.
 /// Locked moves (not yet unlocked in Academy) are displayed with a lock
 /// icon and greyed-out styling.
-class MovesScreen extends StatefulWidget {
+class MovesScreen extends StatelessWidget {
   const MovesScreen({super.key});
-
-  @override
-  State<MovesScreen> createState() => _MovesScreenState();
-}
-
-class _MovesScreenState extends State<MovesScreen> {
-  late final AccordionController _accordionController;
-
-  @override
-  void initState() {
-    super.initState();
-    _accordionController = AccordionController();
-  }
-
-  @override
-  void dispose() {
-    _accordionController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,8 +62,6 @@ class _MovesScreenState extends State<MovesScreen> {
                     leadingIcon: Icons.sports_martial_arts,
                     accentColor: const Color(0xFFFF5722), // Orange for Library
                     initiallyExpanded: false,
-                    accordionController: _accordionController,
-                    sectionId: 'punches',
                     children: punches.map((move) => _MoveListItem(
                           move: move,
                           unlockState: MoveLockStatusResolver.getUnlockState(
@@ -101,8 +80,6 @@ class _MovesScreenState extends State<MovesScreen> {
                     leadingIcon: Icons.shield,
                     accentColor: const Color(0xFFFF5722), // Orange for Library
                     initiallyExpanded: false,
-                    accordionController: _accordionController,
-                    sectionId: 'defense',
                     children: defense.map((move) => _MoveListItem(
                           move: move,
                           unlockState: MoveLockStatusResolver.getUnlockState(
@@ -121,8 +98,6 @@ class _MovesScreenState extends State<MovesScreen> {
                     leadingIcon: Icons.directions_walk,
                     accentColor: const Color(0xFFFF5722), // Orange for Library
                     initiallyExpanded: false,
-                    accordionController: _accordionController,
-                    sectionId: 'footwork',
                     children: footwork.map((move) => _MoveListItem(
                           move: move,
                           unlockState: MoveLockStatusResolver.getUnlockState(
@@ -142,8 +117,6 @@ class _MovesScreenState extends State<MovesScreen> {
                       leadingIcon: Icons.psychology,
                       accentColor: const Color(0xFFFF5722), // Orange for Library
                       initiallyExpanded: false,
-                      accordionController: _accordionController,
-                      sectionId: 'deception',
                       children: deception.map((move) => _MoveListItem(
                             move: move,
                             unlockState: MoveLockStatusResolver.getUnlockState(

@@ -18,27 +18,8 @@ import 'package:fight_my_shadow/widgets/app_toast.dart';
 /// - LOCKED moves: Darker gray + lock icon, disabled toggle
 ///
 /// This is a selection-only screen - no navigation to Move Detail Page.
-class IncludedMovesScreen extends StatefulWidget {
+class IncludedMovesScreen extends StatelessWidget {
   const IncludedMovesScreen({super.key});
-
-  @override
-  State<IncludedMovesScreen> createState() => _IncludedMovesScreenState();
-}
-
-class _IncludedMovesScreenState extends State<IncludedMovesScreen> {
-  late final AccordionController _accordionController;
-
-  @override
-  void initState() {
-    super.initState();
-    _accordionController = AccordionController();
-  }
-
-  @override
-  void dispose() {
-    _accordionController.dispose();
-    super.dispose();
-  }
 
   // Included Moves theme colors (blue)
   static const _includedMovesPrimary = Color(0xFF1976D2); // Blue 700
@@ -111,8 +92,6 @@ class _IncludedMovesScreenState extends State<IncludedMovesScreen> {
                     leadingIcon: Icons.sports_martial_arts,
                     accentColor: _includedMovesPrimary,
                     initiallyExpanded: false,
-                    accordionController: _accordionController,
-                    sectionId: 'punches',
                     children: punches.map((move) {
                       final unlockState = MoveLockStatusResolver.getUnlockState(
                         move.code,
@@ -140,8 +119,6 @@ class _IncludedMovesScreenState extends State<IncludedMovesScreen> {
                     leadingIcon: Icons.shield,
                     accentColor: _includedMovesPrimary,
                     initiallyExpanded: false,
-                    accordionController: _accordionController,
-                    sectionId: 'defense',
                     children: defense.map((move) {
                       final unlockState = MoveLockStatusResolver.getUnlockState(
                         move.code,
@@ -169,8 +146,6 @@ class _IncludedMovesScreenState extends State<IncludedMovesScreen> {
                     leadingIcon: Icons.directions_walk,
                     accentColor: _includedMovesPrimary,
                     initiallyExpanded: false,
-                    accordionController: _accordionController,
-                    sectionId: 'footwork',
                     children: footwork.map((move) {
                       final unlockState = MoveLockStatusResolver.getUnlockState(
                         move.code,
@@ -199,8 +174,6 @@ class _IncludedMovesScreenState extends State<IncludedMovesScreen> {
                       leadingIcon: Icons.psychology,
                       accentColor: _includedMovesPrimary,
                       initiallyExpanded: false,
-                      accordionController: _accordionController,
-                      sectionId: 'deception',
                       children: deception.map((move) {
                         final unlockState = MoveLockStatusResolver.getUnlockState(
                           move.code,
