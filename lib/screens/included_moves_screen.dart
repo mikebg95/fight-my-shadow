@@ -6,6 +6,9 @@ import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/data/boxing_moves_data.dart';
+import 'package:fight_my_shadow/widgets/collapsible_section.dart';
+import 'package:fight_my_shadow/domain/learning/learning_state.dart';
+import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 
 /// Screen for selecting which unlocked moves to include in Training Sessions.
 ///
@@ -27,6 +30,33 @@ class IncludedMovesScreen extends StatelessWidget {
 
   // Static overlay entry to prevent stacking
   static OverlayEntry? _currentOverlay;
+
+  /// Calculates how many moves in a category are currently included in training.
+  /// Only counts unlocked moves that are toggled ON.
+  int _getIncludedCount(
+    List<Move> moves,
+    TrainingPreferencesController trainingController,
+    LearningState learningState,
+    LearningMove? currentMove,
+  ) {
+    return moves.where((move) {
+      final unlockState = MoveLockStatusResolver.getUnlockState(
+        move.code,
+        learningState,
+        currentMove,
+      );
+      final isUnlocked = unlockState == MoveUnlockState.unlocked;
+      final isIncluded = trainingController.isIncluded(move.code);
+      return isUnlocked && isIncluded;
+    }).length;
+  }
+
+  /// Formats the included count label for section headers.
+  String _formatIncludedLabel(int count) {
+    if (count == 0) return '0 moves included';
+    if (count == 1) return '1 move included';
+    return '$count moves included';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,91 +88,113 @@ class IncludedMovesScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                 children: [
                   // Punches section
-                  _buildSectionHeader(context, 'Punches', punches.length),
-                  ...punches.map((move) {
-                    final unlockState = MoveLockStatusResolver.getUnlockState(
-                      move.code,
-                      learningState,
-                      currentMove,
-                    );
-                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
-                    final isIncluded = trainingController.isIncluded(move.code);
+                  CollapsibleSection(
+                    title: 'Punches',
+                    subtitle: _formatIncludedLabel(_getIncludedCount(punches, trainingController, learningState, currentMove)),
+                    leadingIcon: Icons.sports_martial_arts,
+                    accentColor: _includedMovesPrimary,
+                    initiallyExpanded: false,
+                    children: punches.map((move) {
+                      final unlockState = MoveLockStatusResolver.getUnlockState(
+                        move.code,
+                        learningState,
+                        currentMove,
+                      );
+                      final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                      final isIncluded = trainingController.isIncluded(move.code);
 
-                    return _buildMoveRow(
-                      context,
-                      trainingController: trainingController,
-                      move: move,
-                      isUnlocked: isUnlocked,
-                      isIncluded: isIncluded,
-                      moveCode: move.code,
-                    );
-                  }),
-                  const SizedBox(height: 16),
+                      return _buildMoveRow(
+                        context,
+                        trainingController: trainingController,
+                        move: move,
+                        isUnlocked: isUnlocked,
+                        isIncluded: isIncluded,
+                        moveCode: move.code,
+                      );
+                    }).toList(),
+                  ),
 
                   // Defense section
-                  _buildSectionHeader(context, 'Defense', defense.length),
-                  ...defense.map((move) {
-                    final unlockState = MoveLockStatusResolver.getUnlockState(
-                      move.code,
-                      learningState,
-                      currentMove,
-                    );
-                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
-                    final isIncluded = trainingController.isIncluded(move.code);
+                  CollapsibleSection(
+                    title: 'Defense',
+                    subtitle: _formatIncludedLabel(_getIncludedCount(defense, trainingController, learningState, currentMove)),
+                    leadingIcon: Icons.shield,
+                    accentColor: _includedMovesPrimary,
+                    initiallyExpanded: false,
+                    children: defense.map((move) {
+                      final unlockState = MoveLockStatusResolver.getUnlockState(
+                        move.code,
+                        learningState,
+                        currentMove,
+                      );
+                      final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                      final isIncluded = trainingController.isIncluded(move.code);
 
-                    return _buildMoveRow(
-                      context,
-                      trainingController: trainingController,
-                      move: move,
-                      isUnlocked: isUnlocked,
-                      isIncluded: isIncluded,
-                      moveCode: move.code,
-                    );
-                  }),
-                  const SizedBox(height: 16),
+                      return _buildMoveRow(
+                        context,
+                        trainingController: trainingController,
+                        move: move,
+                        isUnlocked: isUnlocked,
+                        isIncluded: isIncluded,
+                        moveCode: move.code,
+                      );
+                    }).toList(),
+                  ),
 
                   // Footwork section
-                  _buildSectionHeader(context, 'Footwork', footwork.length),
-                  ...footwork.map((move) {
-                    final unlockState = MoveLockStatusResolver.getUnlockState(
-                      move.code,
-                      learningState,
-                      currentMove,
-                    );
-                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
-                    final isIncluded = trainingController.isIncluded(move.code);
+                  CollapsibleSection(
+                    title: 'Footwork',
+                    subtitle: _formatIncludedLabel(_getIncludedCount(footwork, trainingController, learningState, currentMove)),
+                    leadingIcon: Icons.directions_walk,
+                    accentColor: _includedMovesPrimary,
+                    initiallyExpanded: false,
+                    children: footwork.map((move) {
+                      final unlockState = MoveLockStatusResolver.getUnlockState(
+                        move.code,
+                        learningState,
+                        currentMove,
+                      );
+                      final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                      final isIncluded = trainingController.isIncluded(move.code);
 
-                    return _buildMoveRow(
-                      context,
-                      trainingController: trainingController,
-                      move: move,
-                      isUnlocked: isUnlocked,
-                      isIncluded: isIncluded,
-                      moveCode: move.code,
-                    );
-                  }),
-                  const SizedBox(height: 16),
+                      return _buildMoveRow(
+                        context,
+                        trainingController: trainingController,
+                        move: move,
+                        isUnlocked: isUnlocked,
+                        isIncluded: isIncluded,
+                        moveCode: move.code,
+                      );
+                    }).toList(),
+                  ),
 
                   // Deception section
-                  _buildSectionHeader(context, 'Deception', deception.length),
-                  ...deception.map((move) {
-                    final unlockState = MoveLockStatusResolver.getUnlockState(
-                      move.code,
-                      learningState,
-                      currentMove,
-                    );
-                    final isUnlocked = unlockState == MoveUnlockState.unlocked;
-                    final isIncluded = trainingController.isIncluded(move.code);
+                  if (deception.isNotEmpty)
+                    CollapsibleSection(
+                      title: 'Deception',
+                      subtitle: _formatIncludedLabel(_getIncludedCount(deception, trainingController, learningState, currentMove)),
+                      leadingIcon: Icons.psychology,
+                      accentColor: _includedMovesPrimary,
+                      initiallyExpanded: false,
+                      children: deception.map((move) {
+                        final unlockState = MoveLockStatusResolver.getUnlockState(
+                          move.code,
+                          learningState,
+                          currentMove,
+                        );
+                        final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                        final isIncluded = trainingController.isIncluded(move.code);
 
-                    return _buildMoveRow(
-                      context,
-                      trainingController: trainingController,
-                      move: move,
-                      isUnlocked: isUnlocked,
-                      isIncluded: isIncluded,
-                      moveCode: move.code,
-                    );
-                  }),
+                        return _buildMoveRow(
+                          context,
+                          trainingController: trainingController,
+                          move: move,
+                          isUnlocked: isUnlocked,
+                          isIncluded: isIncluded,
+                          moveCode: move.code,
+                        );
+                      }).toList(),
+                    ),
                 ],
               ),
             ),
