@@ -42,15 +42,15 @@ class LearningProgressScreen extends StatelessWidget {
             // Header
             _buildHeader(context),
 
+            // Celebratory hero banner showing highest completed level (FULL WIDTH)
+            _buildCompletedLevelHero(context, allLearningMoves, learningState),
+            const SizedBox(height: 16),
+
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Celebratory hero banner showing highest completed level
-                    _buildCompletedLevelHero(context, allLearningMoves, learningState),
-                    const SizedBox(height: 16),
-
                     // Moves list grouped by level
                     _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
