@@ -9,6 +9,7 @@ import 'package:fight_my_shadow/controllers/training_preferences_controller.dart
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/screens/academy_exam_screen.dart';
+import 'package:fight_my_shadow/screens/move_unlocked_celebration_screen.dart';
 
 /// Screen that displays detailed information about a single move.
 ///
@@ -123,6 +124,43 @@ class MoveDetailScreen extends StatelessWidget {
     // If arsenal session was completed, mark it as done
     if (result != null && result.completed) {
       await controller.markAddToArsenalDone(targetLearningMove.id);
+
+      // Special case: Jab (first move) unlocks immediately after Add-to-Arsenal
+      // For all other moves, they need to pass the exam
+      if (targetLearningMove.id == 1) {
+        // Unlock the move
+        await controller.markExamPassed(targetLearningMove.id);
+
+        // Sync training preferences to include Jab
+        if (context.mounted) {
+          final trainingController = Provider.of<TrainingPreferencesController>(
+            context,
+            listen: false,
+          );
+          await trainingController.syncWithLearningState(controller.state);
+
+          // Show celebration screen
+          if (context.mounted) {
+            // Find the next move for "Next up" text
+            final nextMove = allLearningMoves.firstWhere(
+              (m) => m.id == 2,
+              orElse: () => allLearningMoves[1],
+            );
+
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MoveUnlockedCelebrationScreen(
+                  moveName: targetLearningMove!.displayName,
+                  moveCode: move.code,
+                  nextMoveName: nextMove.displayName,
+                ),
+                settings: const RouteSettings(name: '/celebration'),
+              ),
+            );
+          }
+        }
+      }
     }
   }
 
@@ -178,11 +216,37 @@ class MoveDetailScreen extends StatelessWidget {
       await controller.markExamPassed(targetLearningMove.id);
 
       // Sync training preferences to auto-include the newly unlocked move
-      final trainingController = Provider.of<TrainingPreferencesController>(
-        context,
-        listen: false,
-      );
-      await trainingController.syncWithLearningState(controller.state);
+      if (context.mounted) {
+        final trainingController = Provider.of<TrainingPreferencesController>(
+          context,
+          listen: false,
+        );
+        await trainingController.syncWithLearningState(controller.state);
+
+        // Show celebration screen
+        if (context.mounted) {
+          // Find the next move for "Next up" text
+          String? nextMoveName;
+          final nextMoveIndex = allLearningMoves.indexWhere(
+            (m) => m.id == targetLearningMove!.id + 1,
+          );
+          if (nextMoveIndex != -1) {
+            nextMoveName = allLearningMoves[nextMoveIndex].displayName;
+          }
+
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MoveUnlockedCelebrationScreen(
+                moveName: targetLearningMove!.displayName,
+                moveCode: move.code,
+                nextMoveName: nextMoveName,
+              ),
+              settings: const RouteSettings(name: '/celebration'),
+            ),
+          );
+        }
+      }
     }
   }
 

@@ -16,6 +16,7 @@ import 'package:fight_my_shadow/controllers/training_preferences_controller.dart
 import 'package:fight_my_shadow/repositories/learning_progress_repository.dart';
 import 'package:fight_my_shadow/repositories/training_preferences_repository.dart';
 import 'package:fight_my_shadow/screens/included_moves_screen.dart';
+import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 
 void main() async {
   // Initialize Flutter bindings
@@ -72,6 +73,9 @@ class FightMyShadowApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: _buildAppTheme(),
         home: const DisciplineSelectionScreen(),
+        routes: {
+          '/academy': (context) => const LearningProgressScreen(),
+        },
       ),
     );
   }
