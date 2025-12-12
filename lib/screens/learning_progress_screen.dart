@@ -116,82 +116,80 @@ class LearningProgressScreen extends StatelessWidget {
       levelName = levelMoves.isNotEmpty ? levelMoves.first.levelName : 'Unknown';
     }
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _academyPrimary.withValues(alpha: 0.25),
-            _academySecondary.withValues(alpha: 0.18),
-          ],
-        ),
-        border: Border(
-          top: BorderSide(
-            color: _academyPrimary.withValues(alpha: 0.4),
-            width: 1.5,
-          ),
-          bottom: BorderSide(
-            color: _academyPrimary.withValues(alpha: 0.4),
-            width: 1.5,
-          ),
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Subtle confetti decoration (positioned in background)
-          Positioned(
-            top: 0,
-            right: 20,
-            child: Icon(
-              Icons.auto_awesome,
-              color: _academyPrimary.withValues(alpha: 0.25),
-              size: 48,
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 40,
-            child: Icon(
-              Icons.auto_awesome,
-              color: _academySecondary.withValues(alpha: 0.2),
-              size: 32,
-            ),
-          ),
-
-          // Main content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Level number
-              Text(
-                levelText,
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
-                      color: Colors.white,
-                      height: 1.0,
-                    ),
-              ),
-              const SizedBox(height: 4),
-
-              // Level name
-              Text(
-                levelName,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.8),
-                      letterSpacing: 0.5,
-                    ),
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _academyPrimary.withValues(alpha: 0.25),
+              _academySecondary.withValues(alpha: 0.18),
             ],
           ),
-        ],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _academyPrimary.withValues(alpha: 0.4),
+            width: 1.5,
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Subtle confetti decoration (positioned in background)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Icon(
+                Icons.auto_awesome,
+                color: _academyPrimary.withValues(alpha: 0.25),
+                size: 48,
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 20,
+              child: Icon(
+                Icons.auto_awesome,
+                color: _academySecondary.withValues(alpha: 0.2),
+                size: 32,
+              ),
+            ),
+
+            // Main content
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Level number
+                Text(
+                  levelText,
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.0,
+                        color: Colors.white,
+                        height: 1.0,
+                      ),
+                ),
+                const SizedBox(height: 4),
+
+                // Level name
+                Text(
+                  levelName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        letterSpacing: 0.5,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
