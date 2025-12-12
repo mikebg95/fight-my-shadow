@@ -498,7 +498,7 @@ class _AcademyExamScreenState extends State<AcademyExamScreen> {
                   width: double.infinity,
                   height: 64,
                   child: ElevatedButton(
-                    onPressed: () => _exitWithResult(passed: true),
+                    onPressed: () => _exitWithResult(examPassed: true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: academyPurple,
                       shape: RoundedRectangleBorder(
@@ -521,7 +521,7 @@ class _AcademyExamScreenState extends State<AcademyExamScreen> {
                       child: SizedBox(
                         height: 64,
                         child: OutlinedButton(
-                          onPressed: () => _exitWithResult(passed: false),
+                          onPressed: () => _exitWithResult(examPassed: false),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
                               color: Colors.white.withValues(alpha: 0.3),

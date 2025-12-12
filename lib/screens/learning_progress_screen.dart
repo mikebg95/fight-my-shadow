@@ -410,6 +410,7 @@ class LearningProgressScreen extends StatelessWidget {
         break;
       case MoveUnlockState.readyToUnlockDrillPending:
       case MoveUnlockState.readyToUnlockArsenalPending:
+      case MoveUnlockState.readyToUnlockExamPending:
         icon = Icons.radio_button_checked;
         color = _academyPrimary;
         break;
@@ -435,6 +436,7 @@ class LearningProgressScreen extends StatelessWidget {
         break;
       case MoveUnlockState.readyToUnlockDrillPending:
       case MoveUnlockState.readyToUnlockArsenalPending:
+      case MoveUnlockState.readyToUnlockExamPending:
         label = 'Ready';
         bgColor = _academyPrimary.withValues(alpha: 0.15);
         textColor = _academyPrimary;

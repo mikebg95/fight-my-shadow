@@ -167,13 +167,13 @@ class MoveDetailScreen extends StatelessWidget {
         builder: (context) => AcademyExamScreen(
           targetMove: move,
           unlockedMoves: unlockedMoves,
-          academyLevel: targetLearningMove.level,
+          academyLevel: targetLearningMove?.level ?? 1,
         ),
       ),
     );
 
     // If exam was passed, mark it and unlock the move
-    if (result != null && result.passed) {
+    if (result != null && result.passed && targetLearningMove != null) {
       await controller.markExamPassed(targetLearningMove.id);
     }
   }
