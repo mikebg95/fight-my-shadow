@@ -70,8 +70,6 @@ class LearningMove {
   /// Returns the level name as a string.
   String get levelName {
     switch (level) {
-      case 0:
-        return 'The First Bell';
       case 1:
         return 'Foundation Fists';
       case 2:

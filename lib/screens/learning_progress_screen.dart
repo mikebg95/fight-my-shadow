@@ -9,8 +9,6 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
-import 'package:fight_my_shadow/main.dart';
-import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/widgets/collapsible_section.dart';
 
 // Academy color theme (purple instead of orange)
@@ -39,6 +37,10 @@ class LearningProgressScreen extends StatelessWidget {
         .where((p) => p.isUnlocked)
         .length;
     final nextAction = LearningProgressService.computeNextAction(learningState);
+    final currentMove = learningState.currentMove;
+
+    // Check if we're in "Level 0" state (before any moves unlocked)
+    final isLevelZero = unlockedCount == 0 && currentMove != null && currentMove.level == 1;
 
     return Scaffold(
       body: SafeArea(
@@ -52,13 +54,33 @@ class LearningProgressScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Global progress section
-                    _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
+                    // Hero header for Level 0 state OR normal content
+                    if (isLevelZero)
+                      _buildLevelZeroHero(context)
+                    else ...[
+                      // Global progress section (moved to bottom when Level 0)
+                      _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
+                      const SizedBox(height: 24),
+
+                      // Moves list grouped by level
+                      _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
+                    ],
                     const SizedBox(height: 24),
 
-                    // Moves list grouped by level
-                    _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
-                    const SizedBox(height: 100), // Space for CTA button
+                    // Bottom CTA (as inline widget when Level 0, otherwise in bottomNavigationBar)
+                    if (isLevelZero)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: _buildCTACard(context, nextAction, learningState),
+                      ),
+
+                    // Progress bar at bottom when Level 0
+                    if (isLevelZero) ...[
+                      const SizedBox(height: 24),
+                      _buildGlobalProgressSection(context, unlockedCount, LearningPath.totalMoves, learningState),
+                    ],
+
+                    const SizedBox(height: 100), // Space for bottom CTA when not Level 0
                   ],
                 ),
               ),
@@ -67,8 +89,8 @@ class LearningProgressScreen extends StatelessWidget {
         ),
       ),
 
-      // Bottom CTA button (pinned)
-      bottomNavigationBar: _buildBottomCTA(context, nextAction, learningState),
+      // Bottom CTA button (pinned) - only when NOT Level 0
+      bottomNavigationBar: isLevelZero ? null : _buildBottomCTA(context, nextAction, learningState),
     );
   }
 
@@ -151,6 +173,239 @@ class LearningProgressScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Hero header shown only when in "Level 0" state (before any moves unlocked)
+  Widget _buildLevelZeroHero(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _academyPrimary,
+            _academySecondary,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _academyPrimary.withValues(alpha: 0.4),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: Colors.white,
+              size: 40,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Level title
+          Text(
+            'LEVEL 0',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  letterSpacing: 2.0,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'The First Bell',
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  height: 1.1,
+                ),
+          ),
+          const SizedBox(height: 16),
+
+          // Motivational text
+          Text(
+            'Your boxing journey begins here. Master the fundamentals, one technique at a time.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// CTA card widget (extracted for reuse in inline position during Level 0)
+  Widget _buildCTACard(BuildContext context, NextAction nextAction, LearningState learningState) {
+    String buttonLabel;
+    String? subtitleText;
+    IconData buttonIcon;
+
+    switch (nextAction.type) {
+      case NextActionType.drill:
+        final move = nextAction.moveId != null
+            ? LearningPath.getMoveById(nextAction.moveId!)
+            : null;
+        buttonLabel = move != null
+            ? '${move.displayName} — Start Drill'
+            : 'Start Drill';
+        subtitleText = 'Learn the basics step by step';
+        buttonIcon = Icons.play_circle_filled_rounded;
+        break;
+      case NextActionType.addToArsenal:
+        final move = nextAction.moveId != null
+            ? LearningPath.getMoveById(nextAction.moveId!)
+            : null;
+        buttonLabel = move != null
+            ? '${move.displayName} — Add to Arsenal'
+            : 'Add to Arsenal';
+        subtitleText = 'Open move details';
+        buttonIcon = Icons.add_circle_rounded;
+        break;
+      case NextActionType.progression:
+        final move = nextAction.moveId != null
+            ? LearningPath.getMoveById(nextAction.moveId!)
+            : null;
+        buttonLabel = move != null
+            ? '${move.displayName} — Progression'
+            : 'Progression Session';
+        subtitleText = 'Practice to build muscle memory';
+        buttonIcon = Icons.fitness_center_rounded;
+        break;
+      case NextActionType.exam:
+        final move = nextAction.moveId != null
+            ? LearningPath.getMoveById(nextAction.moveId!)
+            : null;
+        buttonLabel = move != null
+            ? '${move.displayName} — Take Exam'
+            : 'Take Exam';
+        subtitleText = 'Prove your mastery to unlock';
+        buttonIcon = Icons.emoji_events_rounded;
+        break;
+      case NextActionType.learningComplete:
+        buttonLabel = 'Academy Complete';
+        subtitleText = 'All moves unlocked!';
+        buttonIcon = Icons.check_circle_rounded;
+        break;
+    }
+
+    return Card(
+      color: const Color(0xFF1A1A1A),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: _academyPrimary.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: InkWell(
+        onTap: nextAction.type != NextActionType.learningComplete
+            ? () => _handleCTATap(context, nextAction, learningState)
+            : null,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _academyPrimary,
+                      _academySecondary,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  buttonIcon,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      buttonLabel,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                    ),
+                    if (subtitleText != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitleText,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // Arrow
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: _academyPrimary,
+                size: 24,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleCTATap(BuildContext context, NextAction nextAction, LearningState learningState) {
+    if (nextAction.moveId == null) return;
+
+    final learningMove = LearningPath.getMoveById(nextAction.moveId!);
+    if (learningMove == null) return;
+
+    final repository = InMemoryMoveRepository();
+    final moveCode = learningMove.moveCodes.first;
+    final move = repository.getMoveByCode(moveCode);
+
+    if (move != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MoveDetailScreen(move: move),
+        ),
+      );
+    }
   }
 
   Widget _buildGlobalProgressSection(
