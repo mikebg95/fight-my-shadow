@@ -1556,8 +1556,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       ] else ...[
                         // Academy modes (Drill/Arsenal): inline text, no card
                         _buildAcademyComboDisplay(),
-                        // Only add spacing if combo is actually visible
-                        if (_currentCombo != null && _isComboVisible) ...[
+                        // Only add spacing if combo is actually rendered
+                        if (_currentCombo != null && _comboPhase != ComboPhase.idle && !_isInGetReadyDelay && currentPhase != WorkoutPhase.rest) ...[
                           const SizedBox(height: 24),
                         ],
                       ],
@@ -1754,6 +1754,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   ///
   /// Shows combo codes directly as large white text (no card).
   /// Returns SizedBox.shrink() when nothing should be shown.
+  ///
+  /// AUTHORITATIVE RENDERING RULE:
+  /// Render combo text IF AND ONLY IF:
+  /// - _currentCombo != null
+  /// - _comboPhase != ComboPhase.idle
   Widget _buildAcademyComboDisplay() {
     // During rest phase
     if (currentPhase == WorkoutPhase.rest) {
@@ -1765,8 +1770,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return const SizedBox.shrink(); // Show nothing during countdown
     }
 
-    // Show combo only if we have content and it's visible
-    if (_currentCombo != null && _isComboVisible) {
+    // AUTHORITATIVE: Show combo if we have content and phase is active
+    // No extra visibility flags, no first-combo exceptions
+    if (_currentCombo != null && _comboPhase != ComboPhase.idle) {
       final codes = _currentCombo!.moveCodes;
       final codesText = codes.join(' – ');
 
@@ -1774,9 +1780,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         child: Text(
           codesText,
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
+                fontSize: 60,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2.0,
                 color: Colors.white,
               ),
           textAlign: TextAlign.center,
