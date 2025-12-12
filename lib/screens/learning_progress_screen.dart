@@ -10,6 +10,7 @@ import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
 import 'package:fight_my_shadow/widgets/collapsible_section.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 // Academy color theme (purple instead of orange)
 const _academyPrimary = Color(0xFF9C27B0);  // Purple 500
@@ -100,6 +101,8 @@ class LearningProgressScreen extends StatelessWidget {
 
   Widget _buildLevelHero(BuildContext context, List<LearningMove> allLearningMoves, LearningState learningState) {
     final highestCompletedLevel = _getHighestCompletedLevel(allLearningMoves, learningState);
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
 
     // Determine display text
     String levelText;
@@ -117,11 +120,11 @@ class LearningProgressScreen extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: padding),
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -146,7 +149,7 @@ class LearningProgressScreen extends StatelessWidget {
               child: Icon(
                 Icons.auto_awesome,
                 color: _academyPrimary.withValues(alpha: 0.25),
-                size: 48,
+                size: Responsive.iconSize(context, isSmall ? 36 : 48),
               ),
             ),
             Positioned(
@@ -155,7 +158,7 @@ class LearningProgressScreen extends StatelessWidget {
               child: Icon(
                 Icons.auto_awesome,
                 color: _academySecondary.withValues(alpha: 0.2),
-                size: 32,
+                size: Responsive.iconSize(context, isSmall ? 24 : 32),
               ),
             ),
 
@@ -167,12 +170,14 @@ class LearningProgressScreen extends StatelessWidget {
                 Text(
                   levelText,
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 36,
+                        fontSize: Responsive.rf(context, isSmall ? 28 : 36),
                         fontWeight: FontWeight.w900,
                         letterSpacing: 2.0,
                         color: Colors.white,
                         height: 1.0,
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
 
@@ -180,11 +185,13 @@ class LearningProgressScreen extends StatelessWidget {
                 Text(
                   levelName,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 18,
+                        fontSize: Responsive.rf(context, isSmall ? 15 : 18),
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.8),
                         letterSpacing: 0.5,
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -195,8 +202,11 @@ class LearningProgressScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      padding: EdgeInsets.fromLTRB(padding, Responsive.rs(context, 20), padding, Responsive.rs(context, 16)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -219,15 +229,15 @@ class LearningProgressScreen extends StatelessWidget {
               ),
             ),
             child: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.arrow_back,
                 color: Colors.white,
-                size: 22,
+                size: Responsive.iconSize(context, isSmall ? 20 : 22),
               ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: Responsive.rs(context, 16)),
 
           // Title and subtitle
           Expanded(
@@ -239,15 +249,20 @@ class LearningProgressScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w800,
+                        fontSize: Responsive.rf(context, 20),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'My Progress Path',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 13,
+                        fontSize: Responsive.rf(context, 13),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -255,7 +270,7 @@ class LearningProgressScreen extends StatelessWidget {
 
           // Academy logo icon (purple)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 10 : 12)),
             decoration: BoxDecoration(
               color: _academyPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
@@ -264,10 +279,10 @@ class LearningProgressScreen extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.school,
               color: _academyPrimary,
-              size: 24,
+              size: Responsive.iconSize(context, isSmall ? 20 : 24),
             ),
           ),
         ],
@@ -291,7 +306,7 @@ class LearningProgressScreen extends StatelessWidget {
     final sortedLevels = movesByLevel.keys.toList()..sort();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: Responsive.horizontalPadding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: sortedLevels.map((level) {
@@ -321,20 +336,35 @@ class LearningProgressScreen extends StatelessWidget {
       return progress != null && progress.isUnlocked;
     }).length;
 
-    // Determine if this level should be initially expanded
-    // Only expand the level that contains the current move
+    // Determine level status
+    final isLevelCompleted = unlockedInLevel == learningMoves.length;
     final currentMove = learningState.currentMove;
     final isCurrentLevel = currentMove != null && currentMove.level == level;
 
-    // Build title with "In Progress" indicator if this is the current level
+    // Determine leading indicator based on level status
+    IconData? leadingIcon;
+    Color? leadingIconColor;
+    String? leadingEmoji;
+
+    if (isLevelCompleted) {
+      leadingIcon = Icons.check_circle;
+      leadingIconColor = Colors.green.shade400; // Success green for completed
+    } else if (isCurrentLevel) {
+      leadingEmoji = '🔥'; // Fire emoji for in-progress
+    }
+
+    // Build subtitle - status text only
     final titleText = 'LEVEL $level — $levelName';
     final subtitle = isCurrentLevel
-        ? '🔥 In Progress · $unlockedInLevel/${learningMoves.length} unlocked'
+        ? 'In Progress · $unlockedInLevel/${learningMoves.length} unlocked'
         : '$unlockedInLevel/${learningMoves.length} unlocked';
 
     return CollapsibleSection(
       title: titleText,
       subtitle: subtitle,
+      leadingIcon: leadingIcon,
+      leadingIconColor: leadingIconColor,
+      leadingEmoji: leadingEmoji,
       accentColor: _academyPrimary,
       initiallyExpanded: isCurrentLevel,
       children: learningMoves.map((learningMove) =>
@@ -348,6 +378,8 @@ class LearningProgressScreen extends StatelessWidget {
     MoveRepository repository,
     LearningState learningState,
   ) {
+    final isSmall = Responsive.isSmallPhone(context);
+
     // Get the actual Move object(s) for this learning move
     final actualMoves = LearningPath.getActualMovesForLearningMove(learningMove, repository);
 
@@ -401,12 +433,15 @@ class LearningProgressScreen extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.rs(context, isSmall ? 12 : 16),
+              vertical: Responsive.rs(context, isSmall ? 10 : 14),
+            ),
             child: Row(
               children: [
                 // Status icon
                 _buildStatusIcon(context, unlockState),
-                const SizedBox(width: 14),
+                SizedBox(width: Responsive.rs(context, isSmall ? 10 : 14)),
 
                 // Move info
                 Expanded(
@@ -418,14 +453,17 @@ class LearningProgressScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
+                              fontSize: Responsive.rf(context, isSmall ? 14 : 16),
                             ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       if (description.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           description,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                fontSize: 12,
+                                fontSize: Responsive.rf(context, isSmall ? 11 : 12),
                               ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -434,7 +472,7 @@ class LearningProgressScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: Responsive.rs(context, isSmall ? 8 : 12)),
 
                 // Status badge
                 _buildStatusBadge(context, unlockState),
@@ -447,6 +485,7 @@ class LearningProgressScreen extends StatelessWidget {
   }
 
   Widget _buildStatusIcon(BuildContext context, MoveUnlockState unlockState) {
+    final isSmall = Responsive.isSmallPhone(context);
     IconData icon;
     Color color;
 
@@ -467,10 +506,15 @@ class LearningProgressScreen extends StatelessWidget {
         break;
     }
 
-    return Icon(icon, color: color, size: 24);
+    return Icon(
+      icon,
+      color: color,
+      size: Responsive.iconSize(context, isSmall ? 20 : 24),
+    );
   }
 
   Widget _buildStatusBadge(BuildContext context, MoveUnlockState unlockState) {
+    final isSmall = Responsive.isSmallPhone(context);
     String label;
     Color bgColor;
     Color textColor;
@@ -496,7 +540,10 @@ class LearningProgressScreen extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.rs(context, isSmall ? 8 : 10),
+        vertical: Responsive.rs(context, 4),
+      ),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(6),
@@ -504,7 +551,7 @@ class LearningProgressScreen extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: Responsive.rf(context, isSmall ? 10 : 11),
           fontWeight: FontWeight.w700,
           color: textColor,
           letterSpacing: 0.5,
@@ -514,6 +561,8 @@ class LearningProgressScreen extends StatelessWidget {
   }
 
   Widget _buildBottomCTA(BuildContext context, NextAction nextAction, LearningState learningState) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
     String buttonLabel;
     String? subtitleText;
     IconData buttonIcon;
@@ -587,7 +636,7 @@ class LearningProgressScreen extends StatelessWidget {
     final completionPercentage = ((completedCount / totalMoves) * 100).toInt();
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: const Color(0xFF0A0A0A),
         border: Border(
@@ -607,18 +656,20 @@ class LearningProgressScreen extends StatelessWidget {
               Text(
                 subtitleText,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 13,
+                      fontSize: Responsive.rf(context, isSmall ? 12 : 13),
                       color: Colors.white.withValues(alpha: 0.7),
                     ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: Responsive.rs(context, 12)),
             ],
 
             // CTA Button
             Container(
               width: double.infinity,
-              height: 64,
+              height: Responsive.buttonHeight(context),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -640,56 +691,66 @@ class LearningProgressScreen extends StatelessWidget {
                 child: InkWell(
                   onTap: () => _handleCTAPressed(context, nextAction),
                   borderRadius: BorderRadius.circular(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        buttonIcon,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: Text(
-                          buttonLabel,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.8,
-                                fontSize: 15,
-                              ),
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.rs(context, isSmall ? 12 : 16),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          buttonIcon,
+                          color: Colors.white,
+                          size: Responsive.iconSize(context, isSmall ? 22 : 28),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: Responsive.rs(context, isSmall ? 8 : 12)),
+                        Flexible(
+                          child: Text(
+                            buttonLabel,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                  fontSize: Responsive.rf(context, isSmall ? 13 : 15),
+                                ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
 
             // Progress row
-            const SizedBox(height: 16),
+            SizedBox(height: Responsive.rs(context, 16)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '$completedCount out of $totalMoves moves completed',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.7),
-                      ),
+                Flexible(
+                  child: Text(
+                    '$completedCount of $totalMoves moves done',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: Responsive.rf(context, isSmall ? 11 : 13),
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 Text(
                   '$completionPercentage%',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
+                        fontSize: Responsive.rf(context, isSmall ? 11 : 13),
                         fontWeight: FontWeight.w600,
                         color: _academyPrimary.withValues(alpha: 0.8),
                       ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: Responsive.rs(context, 8)),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// A reusable collapsible section widget (accordion) with customizable styling.
 ///
@@ -10,8 +11,14 @@ class CollapsibleSection extends StatefulWidget {
   /// Optional subtitle (e.g., "3/4 unlocked", "2 moves included")
   final String? subtitle;
 
-  /// Optional leading icon for the header
+  /// Optional leading icon for the header (displayed as simple icon, no container)
   final IconData? leadingIcon;
+
+  /// Optional color for the leading icon (defaults to accentColor if not provided)
+  final Color? leadingIconColor;
+
+  /// Optional leading emoji text (e.g., "🔥") - takes precedence over leadingIcon
+  final String? leadingEmoji;
 
   /// Accent color for the theme (purple for Academy, orange for Library, red for Training)
   final Color accentColor;
@@ -30,6 +37,8 @@ class CollapsibleSection extends StatefulWidget {
     required this.title,
     this.subtitle,
     this.leadingIcon,
+    this.leadingIconColor,
+    this.leadingEmoji,
     required this.accentColor,
     this.initiallyExpanded = false,
     required this.children,
@@ -89,8 +98,11 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.rs(context, isSmall ? 12 : 16);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: Responsive.rs(context, 16)),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
@@ -118,24 +130,27 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
             onTap: _toggleExpanded,
             borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(padding),
               child: Row(
                 children: [
-                  // Optional leading icon
-                  if (widget.leadingIcon != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: widget.accentColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        widget.leadingIcon,
-                        color: widget.accentColor,
-                        size: 20,
+                  // Optional leading emoji (takes precedence over icon)
+                  if (widget.leadingEmoji != null) ...[
+                    Text(
+                      widget.leadingEmoji!,
+                      style: TextStyle(
+                        fontSize: Responsive.rf(context, isSmall ? 16 : 18),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: Responsive.rs(context, isSmall ? 8 : 10)),
+                  ]
+                  // Optional leading icon (simple, no container)
+                  else if (widget.leadingIcon != null) ...[
+                    Icon(
+                      widget.leadingIcon,
+                      color: widget.leadingIconColor ?? widget.accentColor,
+                      size: Responsive.iconSize(context, isSmall ? 18 : 20),
+                    ),
+                    SizedBox(width: Responsive.rs(context, isSmall ? 8 : 10)),
                   ],
 
                   // Title and subtitle
@@ -148,7 +163,10 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.5,
+                                fontSize: Responsive.rf(context, isSmall ? 14 : 16),
                               ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         if (widget.subtitle != null) ...[
                           const SizedBox(height: 4),
@@ -156,7 +174,10 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
                             widget.subtitle!,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: Colors.white.withOpacity(0.6),
+                                  fontSize: Responsive.rf(context, isSmall ? 11 : 12),
                                 ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ],
@@ -169,7 +190,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
                     child: Icon(
                       Icons.keyboard_arrow_down,
                       color: widget.accentColor,
-                      size: 24,
+                      size: Responsive.iconSize(context, isSmall ? 20 : 24),
                     ),
                   ),
                 ],
@@ -181,10 +202,10 @@ class _CollapsibleSectionState extends State<CollapsibleSection>
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Padding(
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: 16,
+              padding: EdgeInsets.only(
+                left: padding,
+                right: padding,
+                bottom: padding,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

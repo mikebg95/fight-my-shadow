@@ -18,6 +18,7 @@ import 'package:fight_my_shadow/repositories/training_preferences_repository.dar
 import 'package:fight_my_shadow/screens/included_moves_screen.dart';
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/widgets/app_toast.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 void main() async {
   // Initialize Flutter bindings
@@ -1943,8 +1944,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Widget _buildTimer() {
+    final isSmall = Responsive.isSmallPhone(context);
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.rs(context, isSmall ? 20 : 32),
+        vertical: Responsive.rs(context, isSmall ? 24 : 32),
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(24),
@@ -1953,14 +1958,18 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           width: 2,
         ),
       ),
-      child: Text(
-        _formatTime(remainingSeconds),
-        style: TextStyle(
-          fontSize: 80,
-          fontWeight: FontWeight.w900,
-          color: _primaryColor,
-          letterSpacing: 4,
-          fontFeatures: const [FontFeature.tabularFigures()],
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          _formatTime(remainingSeconds),
+          style: TextStyle(
+            fontSize: Responsive.rf(context, isSmall ? 64 : 80),
+            fontWeight: FontWeight.w900,
+            color: _primaryColor,
+            letterSpacing: isSmall ? 2 : 4,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+          maxLines: 1,
         ),
       ),
     );

@@ -59,6 +59,33 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
 
+  # App icon generator for iOS and Android
+  flutter_launcher_icons: ^0.14.3
+
+  # Native splash screen generator
+  flutter_native_splash: ^2.4.4
+
+# Flutter Launcher Icons configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/app_icon.png"
+  # iOS requires no transparency
+  remove_alpha_ios: true
+  # Android adaptive icon (optional - uses same icon)
+  adaptive_icon_background: "#E53935"
+  adaptive_icon_foreground: "assets/branding/app_icon.png"
+
+# Flutter Native Splash configuration
+flutter_native_splash:
+  color: "#0A0A0A"
+  image: "assets/branding/app_icon.png"
+  android: true
+  ios: true
+  android_12:
+    color: "#0A0A0A"
+    image: "assets/branding/app_icon.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -74,6 +101,7 @@ flutter:
   # Uncomment the line below after adding boxing_bell.mp3 to assets/sounds/
   assets:
     - assets/sounds/boxing_bell.mp3
+    - assets/branding/app_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Celebration screen shown when a move is unlocked.
 ///
@@ -149,88 +150,102 @@ class _MoveUnlockedCelebrationScreenState
               child: AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) {
+                  final isSmall = Responsive.isSmallPhone(context);
                   return Opacity(
                     opacity: _fadeAnimation.value,
                     child: Transform.scale(
                       scale: _scaleAnimation.value,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // "Unlocked!" headline
-                          const Text(
-                            'UNLOCKED!',
-                            style: TextStyle(
-                              fontSize: 56,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 3.0,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Move code badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF9C27B0),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF9C27B0).withOpacity(0.5),
-                                  blurRadius: 20,
-                                  spreadRadius: 5,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.horizontalPadding(context),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // "Unlocked!" headline
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'UNLOCKED!',
+                                style: TextStyle(
+                                  fontSize: Responsive.rf(context, isSmall ? 42 : 56),
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 3.0,
                                 ),
-                              ],
-                            ),
-                            child: Text(
-                              widget.moveCode,
-                              style: const TextStyle(
-                                fontSize: 72,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 24 : 32)),
 
-                          // Move name
-                          Text(
-                            widget.moveName,
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              letterSpacing: 1.5,
+                            // Move code badge
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: Responsive.rs(context, isSmall ? 24 : 32),
+                                vertical: Responsive.rs(context, isSmall ? 12 : 16),
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF9C27B0),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF9C27B0).withValues(alpha: 0.5),
+                                    blurRadius: 20,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                widget.moveCode,
+                                style: TextStyle(
+                                  fontSize: Responsive.rf(context, isSmall ? 52 : 72),
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 48),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 18 : 24)),
 
-                          // Optional "Next up" text
-                          if (widget.nextMoveName != null) ...[
+                            // Move name
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                widget.moveName,
+                                style: TextStyle(
+                                  fontSize: Responsive.rf(context, isSmall ? 24 : 32),
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  letterSpacing: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 36 : 48)),
+
+                            // Optional "Next up" text
+                            if (widget.nextMoveName != null) ...[
+                              Text(
+                                'Next up: ${widget.nextMoveName}',
+                                style: TextStyle(
+                                  fontSize: Responsive.rf(context, isSmall ? 14 : 18),
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: Responsive.rs(context, isSmall ? 18 : 24)),
+                            ],
+
+                            // "Tap to continue" hint
                             Text(
-                              'Next up: ${widget.nextMoveName}',
+                              'Tap to continue',
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.7),
+                                fontSize: Responsive.rf(context, isSmall ? 14 : 16),
+                                color: Colors.white.withValues(alpha: 0.5),
                               ),
                             ),
-                            const SizedBox(height: 24),
                           ],
-
-                          // "Tap to continue" hint
-                          Text(
-                            'Tap to continue',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withOpacity(0.5),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   );

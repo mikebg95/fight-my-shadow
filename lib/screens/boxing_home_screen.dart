@@ -4,6 +4,7 @@ import 'package:fight_my_shadow/screens/library_screen.dart';
 import 'package:fight_my_shadow/screens/combinations_screen.dart';
 import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Boxing home screen - hub for all boxing-specific features.
 ///
@@ -23,9 +24,14 @@ class BoxingHomeScreen extends StatelessWidget {
             // Main content
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                padding: EdgeInsets.fromLTRB(
+                  Responsive.horizontalPadding(context),
+                  8,
+                  Responsive.horizontalPadding(context),
+                  20,
+                ),
                 children: [
-                  const SizedBox(height: 16),
+                  SizedBox(height: Responsive.rs(context, 16)),
 
                   // Academy option
                   _buildOptionCard(
@@ -49,7 +55,7 @@ class BoxingHomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: Responsive.rs(context, 16)),
 
                   // Training Session option
                   _buildOptionCard(
@@ -75,7 +81,7 @@ class BoxingHomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: Responsive.rs(context, 16)),
 
                   // Move Library option
                   _buildOptionCard(
@@ -99,7 +105,7 @@ class BoxingHomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: Responsive.rs(context, 16)),
 
                   // Combinations option
                   _buildOptionCard(
@@ -133,8 +139,11 @@ class BoxingHomeScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(padding),
       child: Row(
         children: [
           // Back button
@@ -147,11 +156,15 @@ class BoxingHomeScreen extends StatelessWidget {
               ),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: Responsive.iconSize(context, 24),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: Responsive.rs(context, 16)),
 
           // Title
           Expanded(
@@ -163,14 +176,20 @@ class BoxingHomeScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w800,
+                        fontSize: Responsive.rf(context, 20),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Choose your training mode',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: Responsive.rf(context, 14),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -178,7 +197,7 @@ class BoxingHomeScreen extends StatelessWidget {
 
           // Boxing icon
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 10 : 12)),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -188,10 +207,10 @@ class BoxingHomeScreen extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.front_hand,
               color: Colors.white,
-              size: 24,
+              size: Responsive.iconSize(context, isSmall ? 20 : 24),
             ),
           ),
         ],
@@ -208,8 +227,11 @@ class BoxingHomeScreen extends StatelessWidget {
     required Color glowColor,
     required VoidCallback onTap,
   }) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final cardHeight = Responsive.rs(context, isSmall ? 88 : 100);
+
     return Container(
-      height: 100,
+      height: cardHeight,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(16),
@@ -227,12 +249,15 @@ class BoxingHomeScreen extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.rs(context, isSmall ? 14 : 20),
+              vertical: Responsive.rs(context, 14),
+            ),
             child: Row(
               children: [
                 // Icon
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 10 : 14)),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -240,10 +265,10 @@ class BoxingHomeScreen extends StatelessWidget {
                   child: Icon(
                     icon,
                     color: Colors.white,
-                    size: 32,
+                    size: Responsive.iconSize(context, isSmall ? 26 : 32),
                   ),
                 ),
-                const SizedBox(width: 20),
+                SizedBox(width: Responsive.rs(context, isSmall ? 14 : 20)),
 
                 // Text content
                 Expanded(
@@ -256,26 +281,30 @@ class BoxingHomeScreen extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.2,
-                              fontSize: 18,
+                              fontSize: Responsive.rf(context, isSmall ? 15 : 18),
                             ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontSize: 14,
+                              fontSize: Responsive.rf(context, isSmall ? 12 : 14),
                               color: Colors.white.withValues(alpha: 0.85),
                             ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
 
                 // Arrow icon
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.white,
-                  size: 20,
+                  size: Responsive.iconSize(context, isSmall ? 16 : 20),
                 ),
               ],
             ),

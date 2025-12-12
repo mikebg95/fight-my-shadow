@@ -10,6 +10,7 @@ import 'package:fight_my_shadow/data/boxing_moves_data.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/domain/learning/learning_state.dart';
 import 'package:fight_my_shadow/widgets/collapsible_section.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Library screen that displays all available moves grouped by category.
 ///
@@ -53,7 +54,12 @@ class MovesScreen extends StatelessWidget {
             // Moves list with category sections
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                padding: EdgeInsets.fromLTRB(
+                  Responsive.horizontalPadding(context),
+                  8,
+                  Responsive.horizontalPadding(context),
+                  20,
+                ),
                 children: [
                   // Punches section
                   CollapsibleSection(
@@ -137,8 +143,11 @@ class MovesScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, int moveCount) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(padding),
       child: Row(
         children: [
           // Back button
@@ -151,11 +160,15 @@ class MovesScreen extends StatelessWidget {
               ),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: Responsive.iconSize(context, isSmall ? 20 : 24),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: Responsive.rs(context, 16)),
 
           // Title and count
           Expanded(
@@ -167,14 +180,20 @@ class MovesScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w800,
+                        fontSize: Responsive.rf(context, 20),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '$moveCount moves total',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: Responsive.rf(context, 14),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -182,7 +201,7 @@ class MovesScreen extends StatelessWidget {
 
           // Icon
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 10 : 12)),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -192,10 +211,10 @@ class MovesScreen extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.sports_martial_arts,
               color: Colors.white,
-              size: 24,
+              size: Responsive.iconSize(context, isSmall ? 20 : 24),
             ),
           ),
         ],
@@ -213,6 +232,9 @@ class MovesScreen extends StatelessWidget {
   }
 
   Widget _buildAcademyProgressHeader(BuildContext context, LearningState learningState) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     // Calculate unlocked moves count
     final totalAcademyMoves = LearningPath.totalMoves;
     final unlockedCount = learningState.moveProgress
@@ -221,7 +243,7 @@ class MovesScreen extends StatelessWidget {
     final progressPercentage = (unlockedCount / totalAcademyMoves * 100).round();
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      margin: EdgeInsets.fromLTRB(padding, 0, padding, 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -251,30 +273,30 @@ class MovesScreen extends StatelessWidget {
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 12 : 16)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 6 : 8)),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.school,
                         color: Colors.white,
-                        size: 20,
+                        size: Responsive.iconSize(context, isSmall ? 18 : 20),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                    SizedBox(width: Responsive.rs(context, 12)),
+                    Expanded(
                       child: Text(
                         'ACADEMY',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: Responsive.rf(context, isSmall ? 14 : 16),
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                           letterSpacing: 1.2,
@@ -284,11 +306,11 @@ class MovesScreen extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward_ios,
                       color: Colors.white.withValues(alpha: 0.7),
-                      size: 16,
+                      size: Responsive.iconSize(context, isSmall ? 14 : 16),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: Responsive.rs(context, 12)),
                 // Progress bar
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -299,22 +321,26 @@ class MovesScreen extends StatelessWidget {
                     minHeight: 6,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: Responsive.rs(context, 8)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '$unlockedCount of $totalAcademyMoves moves unlocked',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w500,
+                    Flexible(
+                      child: Text(
+                        '$unlockedCount of $totalAcademyMoves unlocked',
+                        style: TextStyle(
+                          fontSize: Responsive.rf(context, isSmall ? 11 : 12),
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
                       '$progressPercentage%',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: Responsive.rf(context, isSmall ? 11 : 12),
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
@@ -382,6 +408,8 @@ class _MoveListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+
     // Determine visual properties based on unlock state
     final isLocked = unlockState == MoveUnlockState.locked;
     final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
@@ -430,12 +458,12 @@ class _MoveListItem extends StatelessWidget {
                 : null,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 12 : 16)),
             child: Row(
               children: [
                 // Code badge
                 _buildCodeBadge(context),
-                const SizedBox(width: 16),
+                SizedBox(width: Responsive.rs(context, isSmall ? 12 : 16)),
 
                 // Name and category
                 Expanded(
@@ -446,10 +474,13 @@ class _MoveListItem extends StatelessWidget {
                         move.name,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
+                              fontSize: Responsive.rf(context, isSmall ? 14 : 16),
                               color: isLocked
                                   ? Colors.white.withValues(alpha: 0.6)
                                   : Colors.white,
                             ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
                       _buildCategoryChip(context),
@@ -469,11 +500,13 @@ class _MoveListItem extends StatelessWidget {
 
   /// Builds the state badge (checkmark, unlock, or lock icon).
   Widget _buildStateBadge(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+
     switch (unlockState) {
       case MoveUnlockState.unlocked:
         // Green checkmark badge
         return Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 6 : 8)),
           decoration: BoxDecoration(
             color: Colors.green.shade400.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(8),
@@ -481,7 +514,7 @@ class _MoveListItem extends StatelessWidget {
           child: Icon(
             Icons.check_circle,
             color: Colors.green.shade400,
-            size: 24,
+            size: Responsive.iconSize(context, isSmall ? 20 : 24),
           ),
         );
 
@@ -490,7 +523,10 @@ class _MoveListItem extends StatelessWidget {
       case MoveUnlockState.readyToUnlockExamPending:
         // Purple "Next" badge
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: EdgeInsets.symmetric(
+            horizontal: Responsive.rs(context, isSmall ? 8 : 12),
+            vertical: Responsive.rs(context, isSmall ? 4 : 6),
+          ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -507,19 +543,19 @@ class _MoveListItem extends StatelessWidget {
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.arrow_forward,
                 color: Colors.white,
-                size: 16,
+                size: Responsive.iconSize(context, isSmall ? 14 : 16),
               ),
-              SizedBox(width: 6),
+              SizedBox(width: Responsive.rs(context, 6)),
               Text(
                 'NEXT',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: Responsive.rf(context, isSmall ? 10 : 11),
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: 0.8,
@@ -532,7 +568,7 @@ class _MoveListItem extends StatelessWidget {
       case MoveUnlockState.locked:
         // Grey lock icon
         return Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 6 : 8)),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
@@ -540,22 +576,24 @@ class _MoveListItem extends StatelessWidget {
           child: Icon(
             Icons.lock,
             color: Colors.white.withValues(alpha: 0.5),
-            size: 20,
+            size: Responsive.iconSize(context, isSmall ? 16 : 20),
           ),
         );
     }
   }
 
   Widget _buildCodeBadge(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
     final isLocked = unlockState == MoveUnlockState.locked;
     final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
                             unlockState == MoveUnlockState.readyToUnlockArsenalPending ||
                            unlockState == MoveUnlockState.readyToUnlockExamPending;
     final isActive = unlockState == MoveUnlockState.unlocked || isReadyToUnlock;
+    final badgeSize = Responsive.rs(context, isSmall ? 40 : 48);
 
     return Container(
-      width: 48,
-      height: 48,
+      width: badgeSize,
+      height: badgeSize,
       decoration: BoxDecoration(
         gradient: isLocked
             ? LinearGradient(
@@ -594,7 +632,7 @@ class _MoveListItem extends StatelessWidget {
         child: Text(
           move.code,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: Responsive.rf(context, isSmall ? 16 : 20),
             fontWeight: FontWeight.w800,
             color: isLocked
                 ? Colors.white.withValues(alpha: 0.6)
@@ -606,6 +644,7 @@ class _MoveListItem extends StatelessWidget {
   }
 
   Widget _buildCategoryChip(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
     Color categoryColor;
     IconData categoryIcon;
 
@@ -635,7 +674,10 @@ class _MoveListItem extends StatelessWidget {
         : categoryColor;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.rs(context, isSmall ? 8 : 10),
+        vertical: Responsive.rs(context, 4),
+      ),
       decoration: BoxDecoration(
         color: displayColor.withValues(alpha: isLocked ? 0.15 : 0.2),
         borderRadius: BorderRadius.circular(8),
@@ -649,16 +691,16 @@ class _MoveListItem extends StatelessWidget {
         children: [
           Icon(
             categoryIcon,
-            size: 14,
+            size: Responsive.iconSize(context, isSmall ? 12 : 14),
             color: isLocked
                 ? displayColor.withValues(alpha: 0.6)
                 : displayColor,
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: Responsive.rs(context, 6)),
           Text(
             move.category.label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: Responsive.rf(context, isSmall ? 10 : 12),
               fontWeight: FontWeight.w600,
               color: isLocked
                   ? displayColor.withValues(alpha: 0.6)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/services/sound_effects_service.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Celebration screen shown when a full Academy level is completed.
 ///
@@ -222,127 +223,138 @@ class _LevelCompleteCelebrationScreenState
               child: AnimatedBuilder(
                 animation: _mainController,
                 builder: (context, child) {
+                  final isSmall = Responsive.isSmallPhone(context);
                   return Opacity(
                     opacity: _fadeAnimation.value,
                     child: Transform.scale(
                       scale: _scaleAnimation.value,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Trophy icon with glow
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  const Color(0xFFFFD700).withValues(alpha: 0.3),
-                                  Colors.transparent,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.horizontalPadding(context),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Trophy icon with glow
+                            Container(
+                              padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 14 : 20)),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    const Color(0xFFFFD700).withValues(alpha: 0.3),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700).withValues(alpha: 0.5 * _glowAnimation.value),
+                                    blurRadius: 40,
+                                    spreadRadius: 10,
+                                  ),
                                 ],
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFFFD700).withValues(alpha: 0.5 * _glowAnimation.value),
-                                  blurRadius: 40,
-                                  spreadRadius: 10,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.emoji_events,
-                              size: 80,
-                              color: Color(0xFFFFD700),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // "LEVEL COMPLETE" headline with glow
-                          ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [
-                                Color(0xFFFFD700),
-                                Color(0xFFFFFFFF),
-                                Color(0xFFFFD700),
-                              ],
-                            ).createShader(bounds),
-                            child: const Text(
-                              'LEVEL COMPLETE',
-                              style: TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 4.0,
+                              child: Icon(
+                                Icons.emoji_events,
+                                size: Responsive.iconSize(context, isSmall ? 60 : 80),
+                                color: const Color(0xFFFFD700),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 24 : 32)),
 
-                          // Level number and name badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 16,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [_academyPrimary, _academySecondary],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _academyPrimary.withValues(alpha: 0.6 * _glowAnimation.value),
-                                  blurRadius: 30,
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'LEVEL ${widget.levelNumber}',
-                                  style: const TextStyle(
-                                    fontSize: 36,
+                            // "LEVEL COMPLETE" headline with glow
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFFFFD700),
+                                  Color(0xFFFFFFFF),
+                                  Color(0xFFFFD700),
+                                ],
+                              ).createShader(bounds),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'LEVEL COMPLETE',
+                                  style: TextStyle(
+                                    fontSize: Responsive.rf(context, isSmall ? 36 : 48),
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
-                                    letterSpacing: 3.0,
+                                    letterSpacing: 4.0,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  widget.levelName,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    letterSpacing: 1.0,
-                                  ),
+                              ),
+                            ),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 18 : 24)),
+
+                            // Level number and name badge
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: Responsive.rs(context, isSmall ? 24 : 32),
+                                vertical: Responsive.rs(context, isSmall ? 12 : 16),
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [_academyPrimary, _academySecondary],
                                 ),
-                              ],
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _academyPrimary.withValues(alpha: 0.6 * _glowAnimation.value),
+                                    blurRadius: 30,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'LEVEL ${widget.levelNumber}',
+                                    style: TextStyle(
+                                      fontSize: Responsive.rf(context, isSmall ? 28 : 36),
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 3.0,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.levelName,
+                                    style: TextStyle(
+                                      fontSize: Responsive.rf(context, isSmall ? 18 : 22),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                      letterSpacing: 1.0,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 40),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 28 : 40)),
 
-                          // Motivational text
-                          Text(
-                            'You\'ve mastered this level. Keep going!',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.8),
+                            // Motivational text
+                            Text(
+                              'You\'ve mastered this level. Keep going!',
+                              style: TextStyle(
+                                fontSize: Responsive.rf(context, isSmall ? 14 : 18),
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 48),
+                            SizedBox(height: Responsive.rs(context, isSmall ? 36 : 48)),
 
-                          // "Tap to continue" hint
-                          Text(
-                            'Tap to continue',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withValues(alpha: 0.5),
+                            // "Tap to continue" hint
+                            Text(
+                              'Tap to continue',
+                              style: TextStyle(
+                                fontSize: Responsive.rf(context, isSmall ? 14 : 16),
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   );

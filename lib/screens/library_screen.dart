@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/screens/moves_screen.dart';
 import 'package:fight_my_shadow/screens/combinations_screen.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Move Library screen that provides access to the moves catalog.
 ///
@@ -10,6 +11,8 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = Responsive.horizontalPadding(context);
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -20,7 +23,7 @@ class LibraryScreen extends StatelessWidget {
             // Content area
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                padding: EdgeInsets.fromLTRB(padding, 8, padding, 20),
                 children: [
                   const SizedBox(height: 8),
 
@@ -54,8 +57,11 @@ class LibraryScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(padding),
       child: Row(
         children: [
           // Back button
@@ -64,15 +70,19 @@ class LibraryScreen extends StatelessWidget {
               color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: Responsive.iconSize(context, isSmall ? 20 : 24),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: Responsive.rs(context, 16)),
 
           // Title
           Expanded(
@@ -84,14 +94,20 @@ class LibraryScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w800,
+                        fontSize: Responsive.rf(context, 20),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Browse boxing moves',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: Responsive.rf(context, 14),
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -99,7 +115,7 @@ class LibraryScreen extends StatelessWidget {
 
           // Icon
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 10 : 12)),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -109,10 +125,10 @@ class LibraryScreen extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.library_books,
               color: Colors.white,
-              size: 24,
+              size: Responsive.iconSize(context, isSmall ? 20 : 24),
             ),
           ),
         ],
@@ -141,18 +157,21 @@ class _LibraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final iconBoxSize = Responsive.rs(context, isSmall ? 48 : 56);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               width: 1,
             ),
           ),
@@ -160,14 +179,14 @@ class _LibraryCard extends StatelessWidget {
             children: [
               // Icon with gradient background
               Container(
-                width: 56,
-                height: 56,
+                width: iconBoxSize,
+                height: iconBoxSize,
                 decoration: BoxDecoration(
                   gradient: gradient,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: gradient.colors.first.withOpacity(0.3),
+                      color: gradient.colors.first.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -176,10 +195,10 @@ class _LibraryCard extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: Colors.white,
-                  size: 28,
+                  size: Responsive.iconSize(context, isSmall ? 24 : 28),
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: Responsive.rs(context, isSmall ? 14 : 20)),
 
               // Title and subtitle
               Expanded(
@@ -190,15 +209,20 @@ class _LibraryCard extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
-                            fontSize: 18,
+                            fontSize: Responsive.rf(context, isSmall ? 16 : 18),
                           ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: Responsive.rf(context, isSmall ? 12 : 14),
                           ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -207,8 +231,8 @@ class _LibraryCard extends StatelessWidget {
               // Arrow indicator
               Icon(
                 Icons.chevron_right,
-                color: Colors.white.withOpacity(0.3),
-                size: 28,
+                color: Colors.white.withValues(alpha: 0.3),
+                size: Responsive.iconSize(context, isSmall ? 24 : 28),
               ),
             ],
           ),

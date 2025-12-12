@@ -13,6 +13,7 @@ import 'package:fight_my_shadow/screens/academy_exam_screen.dart';
 import 'package:fight_my_shadow/screens/move_unlocked_celebration_screen.dart';
 import 'package:fight_my_shadow/screens/level_complete_celebration_screen.dart';
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Screen that displays detailed information about a single move.
 ///
@@ -389,8 +390,11 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(padding),
       child: Row(
         children: [
           // Back button
@@ -399,15 +403,19 @@ class MoveDetailScreen extends StatelessWidget {
               color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: Responsive.iconSize(context, isSmall ? 20 : 24),
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: Responsive.rs(context, 16)),
 
           // Title (move name)
           Expanded(
@@ -416,6 +424,7 @@ class MoveDetailScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     letterSpacing: 0.5,
                     fontWeight: FontWeight.w800,
+                    fontSize: Responsive.rf(context, isSmall ? 18 : 20),
                   ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -430,9 +439,12 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildCodeBadge(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final badgeSize = Responsive.rs(context, isSmall ? 48 : 56);
+
     return Container(
-      width: 56,
-      height: 56,
+      width: badgeSize,
+      height: badgeSize,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -452,8 +464,8 @@ class MoveDetailScreen extends StatelessWidget {
       child: Center(
         child: Text(
           move.code,
-          style: const TextStyle(
-            fontSize: 24,
+          style: TextStyle(
+            fontSize: Responsive.rf(context, isSmall ? 20 : 24),
             fontWeight: FontWeight.w900,
             color: Colors.white,
           ),
@@ -463,11 +475,14 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildUnlockStatusBanner(BuildContext context, MoveUnlockState unlockState, LearningMove? currentMove) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     switch (unlockState) {
       case MoveUnlockState.readyToUnlockDrillPending:
         // Show START DRILL button
         return Container(
-          margin: const EdgeInsets.all(20),
+          margin: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -489,16 +504,16 @@ class MoveDetailScreen extends StatelessWidget {
             child: InkWell(
               onTap: () => _handleStartDrill(context),
               borderRadius: BorderRadius.circular(16),
-              child: const Padding(
-                padding: EdgeInsets.all(20),
+              child: Padding(
+                padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
                 child: Row(
                   children: [
                     Icon(
                       Icons.school,
                       color: Colors.white,
-                      size: 32,
+                      size: Responsive.iconSize(context, isSmall ? 28 : 32),
                     ),
-                    SizedBox(width: 16),
+                    SizedBox(width: Responsive.rs(context, isSmall ? 12 : 16)),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,20 +521,24 @@ class MoveDetailScreen extends StatelessWidget {
                           Text(
                             'START DRILL',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: Responsive.rf(context, isSmall ? 16 : 18),
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 1.2,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'Learn this move with guided practice',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: Responsive.rf(context, isSmall ? 12 : 13),
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -527,7 +546,7 @@ class MoveDetailScreen extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward,
                       color: Colors.white,
-                      size: 24,
+                      size: Responsive.iconSize(context, isSmall ? 20 : 24),
                     ),
                   ],
                 ),
@@ -539,7 +558,7 @@ class MoveDetailScreen extends StatelessWidget {
       case MoveUnlockState.readyToUnlockArsenalPending:
         // Show ADD TO ARSENAL button
         return Container(
-          margin: const EdgeInsets.all(20),
+          margin: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -561,16 +580,16 @@ class MoveDetailScreen extends StatelessWidget {
             child: InkWell(
               onTap: () => _handleAddToArsenal(context),
               borderRadius: BorderRadius.circular(16),
-              child: const Padding(
-                padding: EdgeInsets.all(20),
+              child: Padding(
+                padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
                 child: Row(
                   children: [
                     Icon(
                       Icons.add_circle,
                       color: Colors.white,
-                      size: 32,
+                      size: Responsive.iconSize(context, isSmall ? 28 : 32),
                     ),
-                    SizedBox(width: 16),
+                    SizedBox(width: Responsive.rs(context, isSmall ? 12 : 16)),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,20 +597,24 @@ class MoveDetailScreen extends StatelessWidget {
                           Text(
                             'ADD TO ARSENAL',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: Responsive.rf(context, isSmall ? 16 : 18),
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 1.2,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'Practice with unlocked moves',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: Responsive.rf(context, isSmall ? 12 : 13),
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -599,7 +622,7 @@ class MoveDetailScreen extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward,
                       color: Colors.white,
-                      size: 24,
+                      size: Responsive.iconSize(context, isSmall ? 20 : 24),
                     ),
                   ],
                 ),
@@ -611,7 +634,7 @@ class MoveDetailScreen extends StatelessWidget {
       case MoveUnlockState.readyToUnlockExamPending:
         // Show START EXAM button
         return Container(
-          margin: const EdgeInsets.all(20),
+          margin: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -633,16 +656,16 @@ class MoveDetailScreen extends StatelessWidget {
             child: InkWell(
               onTap: () => _handleStartExam(context),
               borderRadius: BorderRadius.circular(16),
-              child: const Padding(
-                padding: EdgeInsets.all(20),
+              child: Padding(
+                padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
                 child: Row(
                   children: [
                     Icon(
                       Icons.assignment_turned_in,
                       color: Colors.white,
-                      size: 32,
+                      size: Responsive.iconSize(context, isSmall ? 28 : 32),
                     ),
-                    SizedBox(width: 16),
+                    SizedBox(width: Responsive.rs(context, isSmall ? 12 : 16)),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,20 +673,24 @@ class MoveDetailScreen extends StatelessWidget {
                           Text(
                             'START EXAM',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: Responsive.rf(context, isSmall ? 16 : 18),
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 1.2,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'Prove your mastery to unlock',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: Responsive.rf(context, isSmall ? 12 : 13),
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -671,7 +698,7 @@ class MoveDetailScreen extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward,
                       color: Colors.white,
-                      size: 24,
+                      size: Responsive.iconSize(context, isSmall ? 20 : 24),
                     ),
                   ],
                 ),
@@ -683,8 +710,11 @@ class MoveDetailScreen extends StatelessWidget {
       case MoveUnlockState.unlocked:
         // Show unlocked label
         return Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          margin: EdgeInsets.all(padding),
+          padding: EdgeInsets.symmetric(
+            horizontal: Responsive.rs(context, isSmall ? 16 : 20),
+            vertical: Responsive.rs(context, isSmall ? 12 : 16),
+          ),
           decoration: BoxDecoration(
             color: Colors.green.shade400.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
@@ -698,13 +728,13 @@ class MoveDetailScreen extends StatelessWidget {
               Icon(
                 Icons.check_circle,
                 color: Colors.green.shade400,
-                size: 28,
+                size: Responsive.iconSize(context, isSmall ? 24 : 28),
               ),
-              const SizedBox(width: 12),
-              const Text(
+              SizedBox(width: Responsive.rs(context, 12)),
+              Text(
                 'UNLOCKED',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: Responsive.rf(context, isSmall ? 14 : 16),
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   letterSpacing: 1.2,
@@ -717,8 +747,8 @@ class MoveDetailScreen extends StatelessWidget {
       case MoveUnlockState.locked:
         // Show locked label with next move to unlock
         return Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(20),
+          margin: EdgeInsets.all(padding),
+          padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
@@ -735,13 +765,13 @@ class MoveDetailScreen extends StatelessWidget {
                   Icon(
                     Icons.lock,
                     color: Colors.white.withValues(alpha: 0.5),
-                    size: 24,
+                    size: Responsive.iconSize(context, isSmall ? 20 : 24),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: Responsive.rs(context, 12)),
                   Text(
                     'LOCKED',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: Responsive.rf(context, isSmall ? 12 : 14),
                       fontWeight: FontWeight.w700,
                       color: Colors.white.withValues(alpha: 0.5),
                       letterSpacing: 1.2,
@@ -750,15 +780,15 @@ class MoveDetailScreen extends StatelessWidget {
                 ],
               ),
               if (currentMove != null) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: Responsive.rs(context, 12)),
                 Text(
                   'Before unlocking this move, first unlock',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: Responsive.rf(context, isSmall ? 12 : 13),
                     color: Colors.white.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: Responsive.rs(context, 8)),
                 TextButton(
                   onPressed: () {
                     // Navigate to the current move's detail page
@@ -782,7 +812,7 @@ class MoveDetailScreen extends StatelessWidget {
                   child: Text(
                     currentMove.displayName,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: Responsive.rf(context, isSmall ? 13 : 15),
                       fontWeight: FontWeight.w700,
                       color: Colors.purple.shade400,
                       decoration: TextDecoration.underline,
@@ -797,21 +827,24 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildVisualPlaceholder(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      height: 200,
+      margin: EdgeInsets.fromLTRB(padding, 0, padding, Responsive.rs(context, 20)),
+      height: Responsive.rs(context, isSmall ? 160 : 200),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -821,15 +854,15 @@ class MoveDetailScreen extends StatelessWidget {
           children: [
             Icon(
               Icons.play_circle_outline,
-              size: 64,
-              color: Colors.white.withOpacity(0.3),
+              size: Responsive.iconSize(context, isSmall ? 48 : 64),
+              color: Colors.white.withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: Responsive.rs(context, 12)),
             Text(
               'Animation coming soon',
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.3),
+                fontSize: Responsive.rf(context, isSmall ? 12 : 14),
+                color: Colors.white.withValues(alpha: 0.3),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -840,14 +873,17 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildMoveSummary(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.fromLTRB(padding, 0, padding, Responsive.rs(context, 24)),
+      padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -860,14 +896,17 @@ class MoveDetailScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
+                  fontSize: Responsive.rf(context, isSmall ? 20 : 24),
                 ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: Responsive.rs(context, 16)),
 
           // Category and discipline chips
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: Responsive.rs(context, 8),
+            runSpacing: Responsive.rs(context, 8),
             children: [
               _buildCategoryChip(context),
               _buildDisciplineChip(context),
@@ -879,6 +918,7 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildCategoryChip(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
     Color categoryColor;
     IconData categoryIcon;
 
@@ -902,12 +942,15 @@ class MoveDetailScreen extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.rs(context, isSmall ? 10 : 12),
+        vertical: Responsive.rs(context, 6),
+      ),
       decoration: BoxDecoration(
-        color: categoryColor.withOpacity(0.2),
+        color: categoryColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: categoryColor.withOpacity(0.3),
+          color: categoryColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -916,14 +959,14 @@ class MoveDetailScreen extends StatelessWidget {
         children: [
           Icon(
             categoryIcon,
-            size: 16,
+            size: Responsive.iconSize(context, isSmall ? 14 : 16),
             color: categoryColor,
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: Responsive.rs(context, 6)),
           Text(
             move.category.label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: Responsive.rf(context, isSmall ? 11 : 13),
               fontWeight: FontWeight.w600,
               color: categoryColor,
               letterSpacing: 0.5,
@@ -935,13 +978,18 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildDisciplineChip(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: EdgeInsets.symmetric(
+        horizontal: Responsive.rs(context, isSmall ? 10 : 12),
+        vertical: Responsive.rs(context, 6),
+      ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -950,16 +998,16 @@ class MoveDetailScreen extends StatelessWidget {
         children: [
           Icon(
             Icons.sports_martial_arts,
-            size: 16,
-            color: Colors.white.withOpacity(0.6),
+            size: Responsive.iconSize(context, isSmall ? 14 : 16),
+            color: Colors.white.withValues(alpha: 0.6),
           ),
-          const SizedBox(width: 6),
+          SizedBox(width: Responsive.rs(context, 6)),
           Text(
             move.discipline.label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: Responsive.rf(context, isSmall ? 11 : 13),
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
               letterSpacing: 0.5,
             ),
           ),
@@ -969,14 +1017,17 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildDescription(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.fromLTRB(padding, 0, padding, Responsive.rs(context, 24)),
+      padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -987,14 +1038,14 @@ class MoveDetailScreen extends StatelessWidget {
             children: [
               Icon(
                 Icons.info_outline,
-                size: 20,
+                size: Responsive.iconSize(context, isSmall ? 18 : 20),
                 color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: Responsive.rs(context, 8)),
               Text(
                 'DESCRIPTION',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
+                      fontSize: Responsive.rf(context, isSmall ? 11 : 12),
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                       color: Theme.of(context).colorScheme.primary,
@@ -1002,12 +1053,13 @@ class MoveDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: Responsive.rs(context, 12)),
           Text(
             move.description!,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   height: 1.6,
-                  color: Colors.white.withOpacity(0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: Responsive.rf(context, isSmall ? 14 : 16),
                 ),
           ),
         ],
@@ -1016,14 +1068,17 @@ class MoveDetailScreen extends StatelessWidget {
   }
 
   Widget _buildTips(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final padding = Responsive.horizontalPadding(context);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.fromLTRB(padding, 0, padding, Responsive.rs(context, 24)),
+      padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 16 : 20)),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -1034,14 +1089,14 @@ class MoveDetailScreen extends StatelessWidget {
             children: [
               Icon(
                 Icons.lightbulb_outline,
-                size: 20,
+                size: Responsive.iconSize(context, isSmall ? 18 : 20),
                 color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: Responsive.rs(context, 8)),
               Text(
                 'COACHING TIPS',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontSize: 12,
+                      fontSize: Responsive.rf(context, isSmall ? 11 : 12),
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                       color: Theme.of(context).colorScheme.primary,
@@ -1049,10 +1104,10 @@ class MoveDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: Responsive.rs(context, 16)),
           ...move.tips!.asMap().entries.map((entry) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.only(bottom: Responsive.rs(context, 12)),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1065,20 +1120,21 @@ class MoveDetailScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: Responsive.rs(context, 12)),
                   Expanded(
                     child: Text(
                       entry.value,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             height: 1.5,
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: Responsive.rf(context, isSmall ? 13 : 14),
                           ),
                     ),
                   ),
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

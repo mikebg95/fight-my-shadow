@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
 import 'package:fight_my_shadow/screens/boxing_home_screen.dart';
 import 'package:fight_my_shadow/screens/coming_soon_screen.dart';
+import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Root screen where users select their training discipline.
 ///
@@ -23,15 +24,13 @@ class DisciplineSelectionScreen extends StatelessWidget {
 
             // Discipline selection grid
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: Responsive.horizontalPadding(context)),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   children: [
-                    const SizedBox(height: 24),
+                    SizedBox(height: Responsive.rs(context, 24)),
                     _buildDisciplineGrid(context),
-                    const SizedBox(height: 32),
-                    _buildFooterText(context),
-                    const SizedBox(height: 20),
+                    SizedBox(height: Responsive.rs(context, 32)),
                   ],
                 ),
               ),
@@ -43,8 +42,11 @@ class DisciplineSelectionScreen extends StatelessWidget {
   }
 
   Widget _buildHeroSection(BuildContext context) {
+    final isSmall = Responsive.isSmallPhone(context);
+    final horizontalPadding = Responsive.horizontalPadding(context);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 32, 20, 40),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, Responsive.rs(context, 32), horizontalPadding, Responsive.rs(context, 40)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -59,7 +61,7 @@ class DisciplineSelectionScreen extends StatelessWidget {
         children: [
           // App icon/logo
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(Responsive.rs(context, 20)),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -76,44 +78,53 @@ class DisciplineSelectionScreen extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.sports_martial_arts,
               color: Colors.white,
-              size: 48,
+              size: Responsive.iconSize(context, isSmall ? 40 : 48),
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: Responsive.rs(context, 32)),
 
           // Title
-          Text(
-            'FIGHT MY SHADOW',
-            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  fontSize: 28,
-                  letterSpacing: 2,
-                  fontWeight: FontWeight.w900,
-                ),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'FIGHT MY SHADOW',
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: Responsive.rf(context, 28),
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w900,
+                  ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: Responsive.rs(context, 16)),
 
           // Main heading
           Text(
             'Choose Your Discipline',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 22,
+                  fontSize: Responsive.rf(context, 22),
                   fontWeight: FontWeight.w600,
                 ),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: Responsive.rs(context, 12)),
 
           // Subtitle
           Text(
             'Select your martial art to customize your training',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: Responsive.rf(context, 16),
                 ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -121,29 +132,23 @@ class DisciplineSelectionScreen extends StatelessWidget {
   }
 
   Widget _buildDisciplineGrid(BuildContext context) {
+    final spacing = Responsive.rs(context, 16);
+    // Adjust aspect ratio for smaller screens to prevent overflow
+    final aspectRatio = Responsive.isSmallPhone(context) ? 0.88 : 0.95;
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 0.95,
+      mainAxisSpacing: spacing,
+      crossAxisSpacing: spacing,
+      childAspectRatio: aspectRatio,
       children: TrainingDiscipline.values.map((discipline) {
         return _DisciplineCard(discipline: discipline);
       }).toList(),
     );
   }
 
-  Widget _buildFooterText(BuildContext context) {
-    return Text(
-      'You can change this later in settings',
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 12,
-            color: Colors.white.withValues(alpha: 0.5),
-          ),
-      textAlign: TextAlign.center,
-    );
-  }
 }
 
 /// Individual discipline selection card.
@@ -201,6 +206,7 @@ class _DisciplineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor = _getAccentColor(context);
+    final isSmall = Responsive.isSmallPhone(context);
 
     return Material(
       color: Colors.transparent,
@@ -216,62 +222,72 @@ class _DisciplineCard extends StatelessWidget {
               width: 1,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      accentColor,
-                      accentColor.withValues(alpha: 0.7),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: Responsive.rs(context, 12)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon
+                Container(
+                  padding: EdgeInsets.all(Responsive.rs(context, isSmall ? 12 : 16)),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        accentColor,
+                        accentColor.withValues(alpha: 0.7),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentColor.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  child: Icon(
+                    _getIcon(),
+                    color: Colors.white,
+                    size: Responsive.iconSize(context, isSmall ? 26 : 32),
+                  ),
                 ),
-                child: Icon(
-                  _getIcon(),
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(height: 16),
+                SizedBox(height: Responsive.rs(context, 12)),
 
-              // Title
-              Text(
-                discipline.label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-
-              // Description
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  discipline.description,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                // Title
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: Responsive.rs(context, 8)),
+                  child: Text(
+                    discipline.label,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: Responsive.rf(context, isSmall ? 14 : 16),
+                        ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: Responsive.rs(context, 4)),
+
+                // Description
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: Responsive.rs(context, 10)),
+                    child: Text(
+                      discipline.description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: Responsive.rf(context, isSmall ? 10 : 11),
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
