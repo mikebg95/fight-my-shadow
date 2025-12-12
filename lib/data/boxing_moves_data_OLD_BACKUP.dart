@@ -23,7 +23,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 1,
     code: '1',
-    name: 'Left straight (Jab)',
+    name: 'Jab',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A quick, straight punch thrown with the lead hand (jab). The most fundamental strike in boxing, used for ranging, setting up combinations, and controlling distance. Extend your arm straight from your guard, rotating your fist so the palm faces down on impact.',
@@ -37,7 +37,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 2,
     code: '2',
-    name: 'Right straight (Cross)',
+    name: 'Cross',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A powerful straight punch thrown with the rear hand (cross). One of the most powerful punches in boxing, generating force through hip and shoulder rotation. Pivot your rear foot and rotate your hips as you extend your arm straight toward the target.',
@@ -134,7 +134,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 9,
     code: '9',
-    name: 'Left straight to body',
+    name: 'Jab to body',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A straight punch to the body with the lead hand. Similar mechanics to a jab but aimed at the midsection. Used to attack the body while maintaining distance.',
@@ -142,7 +142,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 10,
     code: '10',
-    name: 'Right straight to body',
+    name: 'Cross to body',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A straight power punch to the body with the rear hand. Combines the distance of a cross with body attack. Dip slightly and rotate your hips as you drive straight into the midsection.',
@@ -468,7 +468,7 @@ Move? getMoveById(int id) {
 ///
 /// Example:
 /// ```dart
-/// final jab = getMoveByCode('1');     // Returns Move(id: 1, name: "Left straight")
+/// final jab = getMoveByCode('1');     // Returns Move(id: 1, name: "Jab")
 /// final slipLeft = getMoveByCode('A'); // Returns Move(id: 15, name: "Slip left")
 /// final feint = getMoveByCode('F');   // Returns Move(id: 39, name: "Feint")
 /// ```

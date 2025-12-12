@@ -25,7 +25,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 1,
     code: '1',
-    name: 'Left straight (Jab)',
+    name: 'Jab',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A quick, straight punch thrown with the lead hand (jab). The most fundamental strike in boxing, used for ranging, setting up combinations, and controlling distance.',
@@ -38,7 +38,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 2,
     code: '2',
-    name: 'Right straight (Cross)',
+    name: 'Cross',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A powerful straight punch thrown with the rear hand (cross). Generates force through hip and shoulder rotation.',
@@ -124,7 +124,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 8,
     code: '8',
-    name: 'Left straight to body',
+    name: 'Jab to body',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A straight punch to the body with the lead hand. Similar mechanics to a jab but aimed at the midsection.',
@@ -137,7 +137,7 @@ final List<Move> boxingMoves = [
   const Move(
     id: 9,
     code: '9',
-    name: 'Right straight to body',
+    name: 'Cross to body',
     category: MoveCategory.punch,
     discipline: Discipline.boxing,
     description: 'A straight power punch to the body with the rear hand. Rotate your hips as you drive into the midsection.',

@@ -56,7 +56,7 @@ extension MoveCategoryExtension on MoveCategory {
 /// const jab = Move(
 ///   id: 1,
 ///   code: '1',
-///   name: 'Left straight',
+///   name: 'Jab',
 ///   category: MoveCategory.punch,
 ///   discipline: Discipline.boxing,
 /// );
@@ -69,7 +69,7 @@ class Move {
   /// This is the primary external label for the move
   final String code;
 
-  /// Full human-readable name (e.g., "Left straight", "Slip left")
+  /// Full human-readable name (e.g., "Jab", "Slip left")
   final String name;
 
   /// The category/type of this move

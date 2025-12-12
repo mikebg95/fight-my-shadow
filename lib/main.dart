@@ -979,7 +979,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   // UI visibility state (separate from engine state)
   // This controls whether combo text is shown, but does NOT affect the combo state machine
-  bool _isComboVisible = true;
+  // Starts false for Academy modes (will be set true when first combo appears)
+  bool _isComboVisible = false;
   double _comboHideDelaySeconds = 0.0;
 
   // Track whether we've ever shown a combo in this session
@@ -1020,6 +1021,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _soundService.playBell();
       _isInGetReadyDelay = true;
       _getReadyRemainingSeconds = 3.0;
+      _isComboVisible = false; // Start hidden, will show when first combo appears
+    } else {
+      // Training mode: start with combo visible immediately
+      _isComboVisible = true;
     }
 
     _startTimer();
@@ -1207,6 +1212,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     return true;
   }
 
+  /// Returns true for modes that use fast Academy cadence (Drill and Add-to-Arsenal).
+  /// These modes share identical timing: minimal announce/execute durations and
+  /// calculated recovery to keep total cycle in 3-5 second range.
+  bool get _isFastAcademyCadence =>
+      widget.config.mode == SessionMode.drill ||
+      widget.config.mode == SessionMode.addToArsenal;
+
   /// Determines whether the combo card should be shown.
   ///
   /// In Academy modes (Drill/Arsenal), only show card when:
@@ -1259,29 +1271,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   /// Calculates the announce phase duration based on combo length.
   /// Base duration + per-move duration.
-  /// Drill mode uses minimal announce times for frequent callouts.
+  /// Fast Academy modes (Drill/Arsenal) use minimal announce times for frequent callouts.
   double _calculateAnnounceDuration(Combo combo) {
-    if (widget.config.mode == SessionMode.drill) {
-      // Drill mode: minimal announce time - just enough for TTS
+    if (_isFastAcademyCadence) {
+      // Fast Academy cadence: minimal announce time - just enough for TTS
       // Total cycle should be dominated by recovery gap (1-5s)
       return 0.3 + (combo.moveCodes.length * 0.15); // ~0.3-0.75s
     }
 
+    // Training mode: longer announce for clearer guidance
     const baseSeconds = 1.0;
     const secondsPerMove = 0.3;
     return baseSeconds + (combo.moveCodes.length * secondsPerMove);
   }
 
   /// Calculates the execution phase duration based on difficulty and combo length.
-  /// Drill mode uses minimal execution times for frequent callouts.
+  /// Fast Academy modes (Drill/Arsenal) use minimal execution times for frequent callouts.
   double _calculateExecutionDuration(Combo combo) {
-    if (widget.config.mode == SessionMode.drill) {
-      // Drill mode: minimal execution time
+    if (_isFastAcademyCadence) {
+      // Fast Academy cadence: minimal execution time
       // Total cycle should be dominated by recovery gap (1-5s)
       return combo.moveCodes.length * 0.4; // 0.4-1.2s
     }
 
-    // Time per move varies with difficulty
+    // Training mode: time per move varies with difficulty
     double secondsPerMove;
     switch (widget.config.difficulty) {
       case Difficulty.beginner:
@@ -1312,11 +1325,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   /// Calculates the recovery phase duration based on intensity.
-  /// Drill mode uses controlled recovery to keep total cycle time 3-5 seconds.
-  /// Add-to-Arsenal mode uses random recovery times (3-5 seconds).
+  /// Fast Academy modes (Drill/Arsenal) use controlled recovery to keep total cycle time 3-5 seconds.
   double _calculateRecoveryDuration() {
-    if (widget.config.mode == SessionMode.drill && _currentCombo != null) {
-      // Drill mode: calculate recovery to keep total cycle in 3-5 second range
+    if (_isFastAcademyCadence && _currentCombo != null) {
+      // Fast Academy cadence: calculate recovery to keep total cycle in 3-5 second range
       final announceDuration = _calculateAnnounceDuration(_currentCombo!);
       final executeDuration = _calculateExecutionDuration(_currentCombo!);
 
@@ -1333,12 +1345,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return recovery;
     }
 
-    if (widget.config.mode == SessionMode.addToArsenal) {
-      // Add-to-Arsenal mode: random recovery between 3.0 and 5.0 seconds
-      final random = Random();
-      return 3.0 + random.nextDouble() * 2.0; // 3.0 to 5.0 seconds
-    }
-
+    // Training mode: recovery based on intensity
     switch (widget.config.intensity) {
       case Intensity.low:
         return 4.0; // Longer recovery for low intensity
@@ -1539,10 +1546,20 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       _buildTimer(),
                       const SizedBox(height: 24),
 
-                      // Combo display (conditionally shown in Academy modes)
-                      if (_shouldShowComboCard) ...[
-                        _buildComboCard(),
-                        const SizedBox(height: 24),
+                      // Combo display - mode-specific rendering
+                      if (widget.config.mode == SessionMode.training) ...[
+                        // Training mode: use card (existing behavior)
+                        if (_shouldShowComboCard) ...[
+                          _buildComboCard(),
+                          const SizedBox(height: 24),
+                        ],
+                      ] else ...[
+                        // Academy modes (Drill/Arsenal): inline text, no card
+                        _buildAcademyComboDisplay(),
+                        // Only add spacing if combo is actually visible
+                        if (_currentCombo != null && _isComboVisible) ...[
+                          const SizedBox(height: 24),
+                        ],
                       ],
 
                       // Configuration summary (conditionally shown)
@@ -1731,6 +1748,44 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ),
       ),
     );
+  }
+
+  /// Builds inline combo display for Academy modes (Drill/Arsenal).
+  ///
+  /// Shows combo codes directly as large white text (no card).
+  /// Returns SizedBox.shrink() when nothing should be shown.
+  Widget _buildAcademyComboDisplay() {
+    // During rest phase
+    if (currentPhase == WorkoutPhase.rest) {
+      return const SizedBox.shrink(); // Rest is shown elsewhere
+    }
+
+    // During get-ready delay
+    if (_isInGetReadyDelay) {
+      return const SizedBox.shrink(); // Show nothing during countdown
+    }
+
+    // Show combo only if we have content and it's visible
+    if (_currentCombo != null && _isComboVisible) {
+      final codes = _currentCombo!.moveCodes;
+      final codesText = codes.join(' – ');
+
+      return Center(
+        child: Text(
+          codesText,
+          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+                color: Colors.white,
+              ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    // Otherwise show nothing
+    return const SizedBox.shrink();
   }
 
   Widget _buildComboCard() {

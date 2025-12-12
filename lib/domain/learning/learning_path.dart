@@ -32,7 +32,7 @@ class LearningPath {
       id: 1,
       level: 1,
       orderInLevel: 0,
-      displayName: 'Left straight (Jab)',
+      displayName: 'Jab',
       description:
           'The jab is your most important punch. A quick, straight punch thrown with your lead hand. Use it to measure distance, set up combinations, and keep your opponent at bay.',
       moveCodes: ['1'],
@@ -41,7 +41,7 @@ class LearningPath {
       id: 2,
       level: 1,
       orderInLevel: 1,
-      displayName: 'Right straight (Cross)',
+      displayName: 'Cross',
       description:
           'A powerful straight punch thrown with your rear hand. One of your most powerful weapons, generating force through hip and shoulder rotation.',
       moveCodes: ['2'],
@@ -322,7 +322,7 @@ class LearningPath {
       id: 31,
       level: 11,
       orderInLevel: 0,
-      displayName: 'Left straight to body',
+      displayName: 'Jab to body',
       description:
           'A straight punch to the body with the lead hand. Similar mechanics to a jab but aimed at the midsection. Used to attack the body while maintaining distance.',
       moveCodes: ['8'],
@@ -331,7 +331,7 @@ class LearningPath {
       id: 32,
       level: 11,
       orderInLevel: 1,
-      displayName: 'Right straight to body',
+      displayName: 'Cross to body',
       description:
           'A straight power punch to the body with the rear hand. Combines the distance of a cross with body attack. Dip slightly and rotate your hips as you drive straight into the midsection.',
       moveCodes: ['9'],
