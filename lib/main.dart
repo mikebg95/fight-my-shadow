@@ -995,7 +995,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Show informational message
                         AppToast.info(
                           context,
-                          'Select at least one unlocked move',
+                          'Select at least one unlocked move to start training',
                         );
                       },
                 borderRadius: BorderRadius.circular(16),

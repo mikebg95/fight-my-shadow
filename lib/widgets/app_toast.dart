@@ -10,23 +10,22 @@ enum ToastType {
 
 /// Centralized toast/snackbar utility for the app.
 ///
-/// Provides a clean, minimal, purely informational toast notification.
-/// Features smooth slide-up animation and subtle tinted background.
-/// No action buttons - just calm, non-intrusive messaging.
+/// Provides a premium, modern toast overlay that replaces default SnackBar.
+/// Features smooth animations, glassmorphic design, and tap-to-dismiss.
 class AppToast {
   static OverlayEntry? _currentOverlay;
 
-  /// Shows a purely informational toast notification.
+  /// Shows a premium toast notification.
   ///
   /// [context] - Build context
-  /// [message] - Message to display (sentence case, single sentence)
+  /// [message] - Message to display
   /// [type] - Toast type (error, success, info, warning)
-  /// [duration] - How long to show before auto-dismiss (default 2500ms)
+  /// [duration] - How long to show before auto-dismiss (default 2000ms)
   static void show(
     BuildContext context,
     String message, {
     ToastType type = ToastType.info,
-    Duration duration = const Duration(milliseconds: 2500),
+    Duration duration = const Duration(milliseconds: 2000),
   }) {
     // Remove existing overlay if present
     _currentOverlay?.remove();
@@ -79,7 +78,7 @@ class AppToast {
   }
 }
 
-/// Minimal informational toast overlay with slide-up animation
+/// Modern toast overlay widget with animations
 class _AppToastOverlay extends StatefulWidget {
   final String message;
   final ToastType type;
@@ -98,25 +97,21 @@ class _AppToastOverlay extends StatefulWidget {
 class _AppToastOverlayState extends State<_AppToastOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
-    // Slide up from below
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
+    _scaleAnimation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+      curve: Curves.easeOutBack,
+    );
 
     _opacityAnimation = CurvedAnimation(
       parent: _controller,
@@ -139,7 +134,7 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
       case ToastType.success:
         return const Color(0xFF388E3C); // Green
       case ToastType.info:
-        return const Color(0xFF1976D2); // Blue
+        return const Color(0xFF546E7A); // Neutral blue-grey
       case ToastType.warning:
         return const Color(0xFFF57C00); // Orange
     }
@@ -148,27 +143,26 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
   IconData _getIcon() {
     switch (widget.type) {
       case ToastType.error:
-        return Icons.info_outline_rounded;
+        return Icons.warning_rounded;
       case ToastType.success:
-        return Icons.check_circle_outline_rounded;
+        return Icons.check_circle_rounded;
       case ToastType.info:
-        return Icons.info_outline_rounded;
+        return Icons.info_rounded;
       case ToastType.warning:
-        return Icons.info_outline_rounded;
+        return Icons.warning_rounded;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = _getColor();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _getColor();
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + 20,
-      left: 24,
-      right: 24,
-      child: SlideTransition(
-        position: _slideAnimation,
+      left: 20,
+      right: 20,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
         child: AnimatedBuilder(
           animation: _opacityAnimation,
           builder: (context, child) {
@@ -181,55 +175,71 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
           },
           child: GestureDetector(
             onTap: () {
-              // Tap to dismiss
+              // Dismiss on tap
               _controller.reverse().then((_) => widget.onDismiss());
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                // Subtle tinted background (10-15% opacity)
-                color: isDark
-                    ? themeColor.withValues(alpha: 0.15)
-                    : themeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: themeColor.withValues(alpha: 0.3),
-                  width: 1,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color,
+                      color.withValues(alpha: 0.9),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Small muted icon
-                  Icon(
-                    _getIcon(),
-                    color: themeColor.withValues(alpha: 0.8),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  // Message text
-                  Expanded(
-                    child: Text(
-                      widget.message,
-                      style: TextStyle(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.95)
-                            : Colors.black.withValues(alpha: 0.9),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.1,
-                        height: 1.4,
+                child: Row(
+                  children: [
+                    // Icon
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _getIcon(),
+                        color: Colors.white,
+                        size: 24,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 16),
+                    // Message text
+                    Expanded(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
