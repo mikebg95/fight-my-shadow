@@ -314,7 +314,7 @@ class LearningProgressScreen extends StatelessWidget {
     );
 
     final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
-                             unlockState == MoveUnlockState.readyToUnlockDrillDone;
+                             unlockState == MoveUnlockState.readyToUnlockArsenalPending;
 
     // Get the display name from actual Move or fallback to learning move name
     final displayName = actualMoves.isNotEmpty
@@ -409,7 +409,7 @@ class LearningProgressScreen extends StatelessWidget {
         color = Colors.green.shade400;
         break;
       case MoveUnlockState.readyToUnlockDrillPending:
-      case MoveUnlockState.readyToUnlockDrillDone:
+      case MoveUnlockState.readyToUnlockArsenalPending:
         icon = Icons.radio_button_checked;
         color = _academyPrimary;
         break;
@@ -434,7 +434,7 @@ class LearningProgressScreen extends StatelessWidget {
         textColor = Colors.green.shade400;
         break;
       case MoveUnlockState.readyToUnlockDrillPending:
-      case MoveUnlockState.readyToUnlockDrillDone:
+      case MoveUnlockState.readyToUnlockArsenalPending:
         label = 'Ready';
         bgColor = _academyPrimary.withValues(alpha: 0.15);
         textColor = _academyPrimary;

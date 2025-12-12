@@ -11,7 +11,7 @@ enum MoveUnlockState {
   readyToUnlockDrillPending,
 
   /// Move is the current learning move - drill completed, ready to add to arsenal.
-  readyToUnlockDrillDone,
+  readyToUnlockArsenalPending,
 
   /// Move is locked and comes after the current move.
   locked,
@@ -22,7 +22,7 @@ enum MoveUnlockState {
 /// Returns one of four visual states:
 /// - Unlocked: Move has been fully unlocked
 /// - ReadyToUnlockDrillPending: Move is current, drill not yet done
-/// - ReadyToUnlockDrillDone: Move is current, drill done, ready for arsenal
+/// - ReadyToUnlockArsenalPending: Move is current, drill done, arsenal pending
 /// - Locked: Move comes after the current move
 class MoveLockStatusResolver {
   /// Determines the visual unlock state of a move by its code.
@@ -50,12 +50,16 @@ class MoveLockStatusResolver {
 
         // Check if this is the current learning move (ready to unlock)
         if (currentMove != null && currentMove.id == learningMove.id) {
-          // Check if drill has been completed
-          if (progress != null && progress.drillDone) {
-            return MoveUnlockState.readyToUnlockDrillDone;
-          } else {
-            return MoveUnlockState.readyToUnlockDrillPending;
+          // Check progression: Drill -> Arsenal -> Unlocked
+          if (progress != null) {
+            if (!progress.drillDone) {
+              return MoveUnlockState.readyToUnlockDrillPending;
+            } else if (!progress.addToArsenalDone) {
+              return MoveUnlockState.readyToUnlockArsenalPending;
+            }
           }
+          // Both done but not marked unlocked yet (shouldn't happen)
+          return MoveUnlockState.readyToUnlockArsenalPending;
         }
 
         // Not unlocked and not current - it's locked

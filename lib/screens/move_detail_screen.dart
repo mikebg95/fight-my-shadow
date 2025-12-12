@@ -307,7 +307,7 @@ class MoveDetailScreen extends StatelessWidget {
           ),
         );
 
-      case MoveUnlockState.readyToUnlockDrillDone:
+      case MoveUnlockState.readyToUnlockArsenalPending:
         // Show ADD TO ARSENAL button
         return Container(
           margin: const EdgeInsets.all(20),
