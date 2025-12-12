@@ -104,19 +104,16 @@ class LearningProgressScreen extends StatelessWidget {
     // Determine display text
     String levelText;
     String levelName;
-    bool isCompleted;
 
     if (highestCompletedLevel == 0) {
       // No levels completed yet
       levelText = 'LEVEL 0';
       levelName = 'The First Bell';
-      isCompleted = false;
     } else {
       // Get the level name from any move in that level
       final levelMoves = allLearningMoves.where((m) => m.level == highestCompletedLevel).toList();
       levelText = 'LEVEL $highestCompletedLevel';
       levelName = levelMoves.isNotEmpty ? levelMoves.first.levelName : 'Unknown';
-      isCompleted = true;
     }
 
     return Container(
@@ -169,33 +166,6 @@ class LearningProgressScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? Colors.green.shade400.withValues(alpha: 0.2)
-                      : _academyPrimary.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isCompleted
-                        ? Colors.green.shade400.withValues(alpha: 0.5)
-                        : _academyPrimary.withValues(alpha: 0.5),
-                    width: 1.5,
-                  ),
-                ),
-                child: Text(
-                  isCompleted ? 'COMPLETED' : 'IN PROGRESS',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: isCompleted ? Colors.green.shade300 : _academySecondary,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
               // Level number
               Text(
                 levelText,
