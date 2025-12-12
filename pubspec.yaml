@@ -71,6 +71,7 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
+  # Uncomment the line below after adding boxing_bell.mp3 to assets/sounds/
   assets:
     - assets/sounds/boxing_bell.mp3
 
