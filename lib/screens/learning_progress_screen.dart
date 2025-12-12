@@ -128,18 +128,18 @@ class LearningProgressScreen extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _academyPrimary.withValues(alpha: 0.15),
-            _academySecondary.withValues(alpha: 0.08),
+            _academyPrimary.withValues(alpha: 0.25),
+            _academySecondary.withValues(alpha: 0.18),
           ],
         ),
         border: Border(
           top: BorderSide(
-            color: _academyPrimary.withValues(alpha: 0.2),
-            width: 1,
+            color: _academyPrimary.withValues(alpha: 0.4),
+            width: 1.5,
           ),
           bottom: BorderSide(
-            color: _academyPrimary.withValues(alpha: 0.2),
-            width: 1,
+            color: _academyPrimary.withValues(alpha: 0.4),
+            width: 1.5,
           ),
         ),
       ),
@@ -151,7 +151,7 @@ class LearningProgressScreen extends StatelessWidget {
             right: 20,
             child: Icon(
               Icons.auto_awesome,
-              color: _academyPrimary.withValues(alpha: 0.15),
+              color: _academyPrimary.withValues(alpha: 0.25),
               size: 48,
             ),
           ),
@@ -160,7 +160,7 @@ class LearningProgressScreen extends StatelessWidget {
             left: 40,
             child: Icon(
               Icons.auto_awesome,
-              color: _academySecondary.withValues(alpha: 0.12),
+              color: _academySecondary.withValues(alpha: 0.2),
               size: 32,
             ),
           ),
@@ -174,13 +174,13 @@ class LearningProgressScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? Colors.green.shade400.withValues(alpha: 0.15)
-                      : _academyPrimary.withValues(alpha: 0.15),
+                      ? Colors.green.shade400.withValues(alpha: 0.2)
+                      : _academyPrimary.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isCompleted
-                        ? Colors.green.shade400.withValues(alpha: 0.3)
-                        : _academyPrimary.withValues(alpha: 0.3),
+                        ? Colors.green.shade400.withValues(alpha: 0.5)
+                        : _academyPrimary.withValues(alpha: 0.5),
                     width: 1.5,
                   ),
                 ),
@@ -189,7 +189,7 @@ class LearningProgressScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: isCompleted ? Colors.green.shade400 : _academyPrimary,
+                    color: isCompleted ? Colors.green.shade300 : _academySecondary,
                     letterSpacing: 1.2,
                   ),
                 ),
