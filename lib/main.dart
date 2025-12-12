@@ -17,6 +17,7 @@ import 'package:fight_my_shadow/repositories/learning_progress_repository.dart';
 import 'package:fight_my_shadow/repositories/training_preferences_repository.dart';
 import 'package:fight_my_shadow/screens/included_moves_screen.dart';
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
+import 'package:fight_my_shadow/widgets/app_toast.dart';
 
 void main() async {
   // Initialize Flutter bindings
@@ -899,12 +900,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     : () {
                         // Show error message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Select at least one unlocked move to start training'),
-                            backgroundColor: Colors.red.shade700,
-                            duration: const Duration(seconds: 2),
-                          ),
+                        AppToast.error(
+                          context,
+                          'Select at least one unlocked move to start training',
+                          actionLabel: 'GO TO ACADEMY',
+                          onAction: () {
+                            Navigator.pushNamed(context, '/academy');
+                          },
                         );
                       },
                 borderRadius: BorderRadius.circular(16),

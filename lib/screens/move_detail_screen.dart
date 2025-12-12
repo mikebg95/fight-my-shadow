@@ -326,14 +326,16 @@ class MoveDetailScreen extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Title
+          // Title (move name)
           Expanded(
             child: Text(
-              'MOVE DETAILS',
+              move.name,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    letterSpacing: 1.5,
+                    letterSpacing: 0.5,
                     fontWeight: FontWeight.w800,
                   ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
 
