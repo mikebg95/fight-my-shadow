@@ -47,6 +47,10 @@ class LearningProgressScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    // Celebratory hero banner showing highest completed level
+                    _buildCompletedLevelHero(context, allLearningMoves, learningState),
+                    const SizedBox(height: 16),
+
                     // Moves list grouped by level
                     _buildMovesListByLevel(context, allLearningMoves, repository, learningState),
                     const SizedBox(height: 100), // Space for CTA button
@@ -144,6 +148,158 @@ class LearningProgressScreen extends StatelessWidget {
     );
   }
 
+  /// Builds a celebratory hero banner showing the highest completed level.
+  ///
+  /// UI-only feature: displays "LEVEL X - Name" where X is the highest level
+  /// with all moves unlocked. If no levels are complete, shows "LEVEL 0 - The First Bell"
+  /// as a purely visual placeholder (not a real curriculum level).
+  Widget _buildCompletedLevelHero(
+    BuildContext context,
+    List<LearningMove> allLearningMoves,
+    LearningState learningState,
+  ) {
+    // Calculate highest completed level
+    int highestCompletedLevel = 0;
+
+    // Group moves by level to check completion
+    final movesByLevel = <int, List<LearningMove>>{};
+    for (final learningMove in allLearningMoves) {
+      movesByLevel.putIfAbsent(learningMove.level, () => []).add(learningMove);
+    }
+
+    // Check each level from 1 to max to find highest completed
+    for (int level = 1; level <= LearningPath.totalLevels; level++) {
+      final movesInLevel = movesByLevel[level] ?? [];
+      if (movesInLevel.isEmpty) continue;
+
+      // Check if ALL moves in this level are unlocked
+      final allUnlocked = movesInLevel.every((lm) {
+        final progress = learningState.getProgressForMove(lm.id);
+        return progress != null && progress.isUnlocked;
+      });
+
+      if (allUnlocked) {
+        highestCompletedLevel = level;
+      } else {
+        // Stop at first incomplete level
+        break;
+      }
+    }
+
+    // Determine display text
+    final String levelText;
+    final String levelName;
+
+    if (highestCompletedLevel == 0) {
+      levelText = 'LEVEL 0';
+      levelName = 'The First Bell';
+    } else {
+      levelText = 'LEVEL $highestCompletedLevel';
+      // Get level name from first move in that level
+      final firstMoveInLevel = movesByLevel[highestCompletedLevel]?.first;
+      levelName = firstMoveInLevel?.levelName ?? 'Unknown';
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _academyPrimary,
+            _academySecondary,
+            _academyPrimary.withValues(alpha: 0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _academyPrimary.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative sparkle elements
+          Positioned(
+            top: 12,
+            right: 20,
+            child: Icon(
+              Icons.auto_awesome,
+              color: Colors.white.withValues(alpha: 0.3),
+              size: 40,
+            ),
+          ),
+          Positioned(
+            bottom: 16,
+            left: 24,
+            child: Icon(
+              Icons.auto_awesome,
+              color: Colors.white.withValues(alpha: 0.2),
+              size: 28,
+            ),
+          ),
+          Positioned(
+            top: 40,
+            left: 60,
+            child: Icon(
+              Icons.auto_awesome,
+              color: Colors.white.withValues(alpha: 0.15),
+              size: 20,
+            ),
+          ),
+
+          // Main content
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Level number
+                Text(
+                  levelText,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.0,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                ),
+                const SizedBox(height: 8),
+                // Level name
+                Text(
+                  levelName,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                        color: Colors.white,
+                        height: 1.1,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                // Subtle subtitle
+                Text(
+                  highestCompletedLevel == 0
+                      ? 'Begin your journey'
+                      : 'Keep pushing forward',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        letterSpacing: 0.3,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildMovesListByLevel(
     BuildContext context,
