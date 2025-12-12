@@ -8,6 +8,13 @@ import 'package:fight_my_shadow/domain/learning/next_action.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
+import 'package:fight_my_shadow/screens/move_detail_screen.dart';
+import 'package:fight_my_shadow/main.dart';
+import 'package:fight_my_shadow/models/move.dart';
+
+// Academy color theme (purple instead of orange)
+const _academyPrimary = Color(0xFF9C27B0);  // Purple 500
+const _academySecondary = Color(0xFFBA68C8); // Purple 300
 
 /// Academy home screen showing learning progress and next action.
 ///
@@ -144,7 +151,7 @@ class LearningProgressScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       letterSpacing: 1.5,
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: _academyPrimary,
                     ),
               ),
               const SizedBox(height: 8),
@@ -164,7 +171,7 @@ class LearningProgressScreen extends StatelessWidget {
                   minHeight: 12,
                   backgroundColor: const Color(0xFF0F0F0F),
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.primary,
+                    _academyPrimary,
                   ),
                 ),
               ),
@@ -185,7 +192,7 @@ class LearningProgressScreen extends StatelessWidget {
                     '${(progress * 100).toInt()}%',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: _academyPrimary,
                         ),
                   ),
                 ],
@@ -253,8 +260,8 @@ class LearningProgressScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.secondary,
+                      _academyPrimary,
+                      _academySecondary,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(8),
@@ -306,7 +313,8 @@ class LearningProgressScreen extends StatelessWidget {
       currentMove,
     );
 
-    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlock;
+    final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
+                             unlockState == MoveUnlockState.readyToUnlockDrillDone;
 
     // Get the display name from actual Move or fallback to learning move name
     final displayName = actualMoves.isNotEmpty
@@ -320,13 +328,13 @@ class LearningProgressScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: isReadyToUnlock
-            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+            ? _academyPrimary.withValues(alpha: 0.1)
             : const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isReadyToUnlock
-              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.05),
+              ? _academyPrimary.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.12),
           width: isReadyToUnlock ? 2 : 1,
         ),
       ),
@@ -334,7 +342,15 @@ class LearningProgressScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: Navigate to move detail or show info
+            // Navigate to move detail page
+            if (actualMoves.isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MoveDetailScreen(move: actualMoves.first),
+                ),
+              );
+            }
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
@@ -392,13 +408,14 @@ class LearningProgressScreen extends StatelessWidget {
         icon = Icons.check_circle;
         color = Colors.green.shade400;
         break;
-      case MoveUnlockState.readyToUnlock:
+      case MoveUnlockState.readyToUnlockDrillPending:
+      case MoveUnlockState.readyToUnlockDrillDone:
         icon = Icons.radio_button_checked;
-        color = Theme.of(context).colorScheme.primary;
+        color = _academyPrimary;
         break;
       case MoveUnlockState.locked:
         icon = Icons.lock;
-        color = Colors.white.withValues(alpha: 0.3);
+        color = Colors.white.withValues(alpha: 0.5);
         break;
     }
 
@@ -416,15 +433,16 @@ class LearningProgressScreen extends StatelessWidget {
         bgColor = Colors.green.shade400.withValues(alpha: 0.15);
         textColor = Colors.green.shade400;
         break;
-      case MoveUnlockState.readyToUnlock:
-        label = 'Unlock';
-        bgColor = Theme.of(context).colorScheme.primary.withValues(alpha: 0.15);
-        textColor = Theme.of(context).colorScheme.primary;
+      case MoveUnlockState.readyToUnlockDrillPending:
+      case MoveUnlockState.readyToUnlockDrillDone:
+        label = 'Ready';
+        bgColor = _academyPrimary.withValues(alpha: 0.15);
+        textColor = _academyPrimary;
         break;
       case MoveUnlockState.locked:
         label = 'Locked';
-        bgColor = Colors.white.withValues(alpha: 0.05);
-        textColor = Colors.white.withValues(alpha: 0.5);
+        bgColor = Colors.white.withValues(alpha: 0.1);
+        textColor = Colors.white.withValues(alpha: 0.65);
         break;
     }
 
@@ -457,10 +475,10 @@ class LearningProgressScreen extends StatelessWidget {
             ? LearningPath.getMoveById(nextAction.moveId!)
             : null;
         buttonLabel = move != null
-            ? 'Start Drill: ${move.displayName}'
-            : 'Start Drill';
-        buttonIcon = Icons.school;
-        subtitleText = 'Learn the move with guided practice';
+            ? 'Next: ${move.displayName}'
+            : 'Next';
+        buttonIcon = Icons.arrow_forward;
+        subtitleText = 'Open move details';
         break;
 
       case NextActionType.progression:
@@ -531,14 +549,14 @@ class LearningProgressScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.secondary,
+                    _academyPrimary,
+                    _academySecondary,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    color: _academyPrimary.withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -584,8 +602,23 @@ class LearningProgressScreen extends StatelessWidget {
   void _handleCTAPressed(BuildContext context, NextAction nextAction) {
     switch (nextAction.type) {
       case NextActionType.drill:
-        // TODO: Navigate to drill session
-        _showPlaceholder(context, 'Drill', 'Drill session coming soon!');
+        // Navigate to Move Detail Page for the current move
+        if (nextAction.moveId != null) {
+          final learningMove = LearningPath.getMoveById(nextAction.moveId!);
+          if (learningMove != null) {
+            final repository = InMemoryMoveRepository();
+            final moveCode = learningMove.moveCodes.first;
+            final move = repository.getMoveByCode(moveCode);
+            if (move != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MoveDetailScreen(move: move),
+                ),
+              );
+            }
+          }
+        }
         break;
 
       case NextActionType.progression:
@@ -623,8 +656,8 @@ class LearningProgressScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'OK',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
+              style: const TextStyle(
+                color: _academyPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),

@@ -5,6 +5,7 @@ import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/main.dart';
 
 /// Screen that displays detailed information about a single move.
