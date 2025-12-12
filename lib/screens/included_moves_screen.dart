@@ -1,0 +1,370 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:fight_my_shadow/controllers/training_preferences_controller.dart';
+import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/domain/learning/learning_path.dart';
+import 'package:fight_my_shadow/repositories/move_repository.dart';
+import 'package:fight_my_shadow/models/move.dart';
+import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
+
+/// Screen for selecting which unlocked moves to include in Training Sessions.
+///
+/// Shows all moves in Academy order with toggle controls:
+/// - UNLOCKED moves: GREEN toggle (included) / GRAY toggle (excluded)
+/// - LOCKED moves: Darker gray + lock icon, disabled toggle
+///
+/// This is a selection-only screen - no navigation to Move Detail Page.
+class IncludedMovesScreen extends StatelessWidget {
+  const IncludedMovesScreen({super.key});
+
+  // Training theme colors (red)
+  static const _trainingPrimary = Color(0xFFD32F2F); // Red 700
+  static const _trainingSecondary = Color(0xFFE57373); // Red 300
+
+  @override
+  Widget build(BuildContext context) {
+    final trainingController = Provider.of<TrainingPreferencesController>(context);
+    final storyController = Provider.of<StoryModeController>(context);
+    final moveRepository = Provider.of<MoveRepository>(context);
+
+    // Get all moves in Academy order
+    final allLearningMoves = LearningPath.getAllMoves();
+    final learningState = storyController.state;
+    final currentMove = learningState.currentMove;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(context, trainingController),
+
+            // Move list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                itemCount: allLearningMoves.length,
+                itemBuilder: (context, index) {
+                  final learningMove = allLearningMoves[index];
+
+                  // Get the first move code for this learning move
+                  final moveCode = learningMove.moveCodes.first;
+                  final move = moveRepository.getMoveByCode(moveCode);
+
+                  if (move == null) return const SizedBox.shrink();
+
+                  // Determine unlock state
+                  final unlockState = MoveLockStatusResolver.getUnlockState(
+                    moveCode,
+                    learningState,
+                    currentMove,
+                  );
+
+                  final isUnlocked = unlockState == MoveUnlockState.unlocked;
+                  final isIncluded = trainingController.isIncluded(moveCode);
+
+                  return _buildMoveRow(
+                    context,
+                    move: move,
+                    isUnlocked: isUnlocked,
+                    isIncluded: isIncluded,
+                    onToggle: isUnlocked
+                        ? () => trainingController.toggleMove(moveCode)
+                        : null,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, TrainingPreferencesController controller) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _trainingPrimary,
+            _trainingSecondary.withValues(alpha: 0.8),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _trainingPrimary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Back button
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Title
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'INCLUDED MOVES',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Select moves for Training Sessions',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Fitness icon
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.fitness_center,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Included count badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.check_circle,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${controller.includedCount} moves included',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoveRow(
+    BuildContext context, {
+    required Move move,
+    required bool isUnlocked,
+    required bool isIncluded,
+    required VoidCallback? onToggle,
+  }) {
+    // Color scheme based on state
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    Color codeColor;
+    double opacity;
+
+    if (isUnlocked && isIncluded) {
+      // GREEN - included
+      backgroundColor = const Color(0xFF1A1A1A);
+      borderColor = Colors.green.withValues(alpha: 0.3);
+      textColor = Colors.white;
+      codeColor = Colors.green;
+      opacity = 1.0;
+    } else if (isUnlocked && !isIncluded) {
+      // GRAY - excluded but available
+      backgroundColor = const Color(0xFF1A1A1A);
+      borderColor = Colors.white.withValues(alpha: 0.1);
+      textColor = Colors.white.withValues(alpha: 0.6);
+      codeColor = Colors.white.withValues(alpha: 0.4);
+      opacity = 0.75;
+    } else {
+      // LOCKED - darker gray
+      backgroundColor = const Color(0xFF141414);
+      borderColor = Colors.white.withValues(alpha: 0.05);
+      textColor = Colors.white.withValues(alpha: 0.4);
+      codeColor = Colors.white.withValues(alpha: 0.3);
+      opacity = 0.6;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Opacity(
+        opacity: opacity,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              // Move code badge
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: codeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: codeColor.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    move.code,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: codeColor,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Move info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      move.name,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      move.category.name.toUpperCase(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: textColor.withValues(alpha: 0.6),
+                            letterSpacing: 1.2,
+                            fontSize: 10,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Toggle or lock icon
+              if (isUnlocked)
+                _buildToggleSwitch(isIncluded, onToggle)
+              else
+                _buildLockIcon(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleSwitch(bool isIncluded, VoidCallback? onToggle) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        width: 56,
+        height: 32,
+        decoration: BoxDecoration(
+          color: isIncluded
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isIncluded
+                ? Colors.green.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.2),
+            width: 2,
+          ),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          alignment: isIncluded ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 24,
+            height: 24,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: isIncluded ? Colors.green : Colors.white.withValues(alpha: 0.5),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLockIcon() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.lock,
+        color: Colors.white.withValues(alpha: 0.3),
+        size: 20,
+      ),
+    );
+  }
+}

@@ -10,32 +10,61 @@ import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/services/voice_coach_service.dart';
 import 'package:fight_my_shadow/controllers/workout_voice_controller.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/controllers/training_preferences_controller.dart';
 import 'package:fight_my_shadow/repositories/learning_progress_repository.dart';
+import 'package:fight_my_shadow/repositories/training_preferences_repository.dart';
+import 'package:fight_my_shadow/screens/included_moves_screen.dart';
 
 void main() async {
   // Initialize Flutter bindings
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize repositories
+  final learningRepository = LearningProgressRepository();
+  final trainingRepository = TrainingPreferencesRepository();
+  final moveRepository = InMemoryMoveRepository();
+
   // Initialize Academy controller with persistence
-  final repository = LearningProgressRepository();
-  final storyModeController = StoryModeController(repository);
+  final storyModeController = StoryModeController(learningRepository);
   await storyModeController.init();
 
-  runApp(FightMyShadowApp(storyModeController: storyModeController));
+  // Initialize Training Preferences controller with persistence
+  final trainingPreferencesController = TrainingPreferencesController(
+    trainingRepository,
+    moveRepository,
+  );
+  await trainingPreferencesController.init(storyModeController.state);
+
+  runApp(FightMyShadowApp(
+    storyModeController: storyModeController,
+    trainingPreferencesController: trainingPreferencesController,
+  ));
 }
 
 class FightMyShadowApp extends StatelessWidget {
   final StoryModeController storyModeController;
+  final TrainingPreferencesController trainingPreferencesController;
 
   const FightMyShadowApp({
     super.key,
     required this.storyModeController,
+    required this.trainingPreferencesController,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<StoryModeController>.value(
-      value: storyModeController,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<StoryModeController>.value(
+          value: storyModeController,
+        ),
+        ChangeNotifierProvider<TrainingPreferencesController>.value(
+          value: trainingPreferencesController,
+        ),
+        Provider<MoveRepository>(
+          create: (_) => InMemoryMoveRepository(),
+        ),
+      ],
       child: MaterialApp(
         title: 'Fight My Shadow',
         debugShowCheckedModeBanner: false,
@@ -408,6 +437,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // Intensity
             _buildIntensitySelector(),
+            const SizedBox(height: 32),
+
+            // Included Moves button
+            _buildIncludedMovesButton(),
           ],
         ),
       ),
@@ -699,67 +732,195 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStartButton() {
-    return Container(
-      width: double.infinity,
-      height: 64,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.secondary,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Create workout configuration and navigate
-            final config = WorkoutConfiguration(
-              rounds: rounds,
-              roundDurationSeconds: (roundMinutes * 60) + roundSeconds,
-              restDurationSeconds: (restMinutes * 60) + restSeconds,
-              difficulty: difficulty,
-              intensity: intensity,
-            );
+  Widget _buildIncludedMovesButton() {
+    return Consumer<TrainingPreferencesController>(
+      builder: (context, trainingController, _) {
+        final includedCount = trainingController.includedCount;
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WorkoutScreen(config: config),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'START WORKOUT',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.w800,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Included Moves',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const IncludedMovesScreen(),
+                  ),
+                );
+                // State automatically updates via Provider when returning
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red.shade700,
+                      Colors.red.shade800,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.red.shade600.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.shade600.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Select moves',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Included moves: $includedCount',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white.withValues(alpha: 0.8),
+                      size: 18,
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStartButton() {
+    return Consumer2<TrainingPreferencesController, StoryModeController>(
+      builder: (context, trainingController, storyController, _) {
+        final includedCount = trainingController.includedCount;
+        final canStart = includedCount > 0;
+
+        return Opacity(
+          opacity: canStart ? 1.0 : 0.5,
+          child: Container(
+            width: double.infinity,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.secondary,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: canStart
+                  ? [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: canStart
+                    ? () {
+                        // Get included unlocked move codes
+                        final includedMoveCodes = trainingController
+                            .getIncludedUnlockedMoveCodes(storyController.state);
+
+                        // Create workout configuration and navigate
+                        final config = WorkoutConfiguration(
+                          rounds: rounds,
+                          roundDurationSeconds: (roundMinutes * 60) + roundSeconds,
+                          restDurationSeconds: (restMinutes * 60) + restSeconds,
+                          difficulty: difficulty,
+                          intensity: intensity,
+                          allowedMoveCodes: includedMoveCodes,
+                        );
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WorkoutScreen(config: config),
+                          ),
+                        );
+                      }
+                    : () {
+                        // Show error message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Select at least one unlocked move to start training'),
+                            backgroundColor: Colors.red.shade700,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'START WORKOUT',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -820,6 +981,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     // Initialize combo generator
     _moveRepository = InMemoryMoveRepository();
     _comboGenerator = BoxingComboGenerator(_moveRepository);
+
+    // Set allowed move codes if specified (for Training Session filtering)
+    if (widget.config.allowedMoveCodes != null) {
+      _comboGenerator.setAllowedMoveCodes(widget.config.allowedMoveCodes);
+    }
 
     // Initialize voice coaching
     final voiceService = VoiceCoachService();

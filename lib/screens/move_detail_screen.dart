@@ -5,6 +5,7 @@ import 'package:fight_my_shadow/domain/learning/learning_move.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
+import 'package:fight_my_shadow/controllers/training_preferences_controller.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/screens/academy_exam_screen.dart';
@@ -175,6 +176,13 @@ class MoveDetailScreen extends StatelessWidget {
     // If exam was passed, mark it and unlock the move
     if (result != null && result.passed && targetLearningMove != null) {
       await controller.markExamPassed(targetLearningMove.id);
+
+      // Sync training preferences to auto-include the newly unlocked move
+      final trainingController = Provider.of<TrainingPreferencesController>(
+        context,
+        listen: false,
+      );
+      await trainingController.syncWithLearningState(controller.state);
     }
   }
 

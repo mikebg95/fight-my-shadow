@@ -34,8 +34,19 @@ class BoxingComboGenerator implements ComboGenerator {
   /// Random number generator for move selection and pattern choice.
   final Random _random = Random();
 
+  /// Optional list of allowed move codes to filter generation.
+  /// If null, all moves are allowed. If provided, only moves in this
+  /// list will be used for combo generation.
+  List<String>? _allowedMoveCodes;
+
   /// Creates a boxing combo generator with access to move data.
   BoxingComboGenerator(this._repository);
+
+  /// Sets the allowed move codes for combo generation.
+  /// Pass null to allow all moves. Pass an empty list to block all moves.
+  void setAllowedMoveCodes(List<String>? codes) {
+    _allowedMoveCodes = codes;
+  }
 
   @override
   Combo generateCombo({
@@ -215,7 +226,8 @@ class BoxingComboGenerator implements ComboGenerator {
 
   /// Returns a random move code from the specified category.
   ///
-  /// Returns null if the category has no available moves.
+  /// Filters by allowed move codes if set. Returns null if the category
+  /// has no available moves or all moves are filtered out.
   String? _randomMoveCodeFromCategory(MoveCategory category) {
     List<Move> moves;
 
@@ -232,6 +244,11 @@ class BoxingComboGenerator implements ComboGenerator {
       case MoveCategory.deception:
         moves = _repository.getMovesByCategory(MoveCategory.deception);
         break;
+    }
+
+    // Filter by allowed move codes if set
+    if (_allowedMoveCodes != null) {
+      moves = moves.where((move) => _allowedMoveCodes!.contains(move.code)).toList();
     }
 
     if (moves.isEmpty) {
