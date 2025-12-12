@@ -6,6 +6,7 @@ import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/models/move.dart';
 import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
+import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 
 /// Screen for selecting which unlocked moves to include in Training Sessions.
 ///
@@ -20,6 +21,10 @@ class IncludedMovesScreen extends StatelessWidget {
   // Training theme colors (red)
   static const _trainingPrimary = Color(0xFFD32F2F); // Red 700
   static const _trainingSecondary = Color(0xFFE57373); // Red 300
+
+  // Academy theme colors (purple)
+  static const _academyPrimary = Color(0xFF9C27B0); // Purple 500
+  static const _academySecondary = Color(0xFFBA68C8); // Purple 300
 
   @override
   Widget build(BuildContext context) {
@@ -65,16 +70,18 @@ class IncludedMovesScreen extends StatelessWidget {
 
                   return _buildMoveRow(
                     context,
+                    trainingController: trainingController,
                     move: move,
                     isUnlocked: isUnlocked,
                     isIncluded: isIncluded,
-                    onToggle: isUnlocked
-                        ? () => trainingController.toggleMove(moveCode)
-                        : null,
+                    moveCode: moveCode,
                   );
                 },
               ),
             ),
+
+            // Academy link at bottom
+            _buildAcademyLink(context),
           ],
         ),
       ),
@@ -201,11 +208,29 @@ class IncludedMovesScreen extends StatelessWidget {
 
   Widget _buildMoveRow(
     BuildContext context, {
+    required TrainingPreferencesController trainingController,
     required Move move,
     required bool isUnlocked,
     required bool isIncluded,
-    required VoidCallback? onToggle,
+    required String moveCode,
   }) {
+    // Handler for toggle with validation
+    void handleToggle() {
+      // If this is included and it's the last one, prevent deselection
+      if (isIncluded && trainingController.includedCount == 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('You must include at least one move'),
+            backgroundColor: _trainingPrimary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
+      // Otherwise, toggle normally
+      trainingController.toggleMove(moveCode);
+    }
     // Color scheme based on state
     Color backgroundColor;
     Color borderColor;
@@ -300,7 +325,7 @@ class IncludedMovesScreen extends StatelessWidget {
 
               // Toggle or lock icon
               if (isUnlocked)
-                _buildToggleSwitch(isIncluded, onToggle)
+                _buildToggleSwitch(isIncluded, handleToggle)
               else
                 _buildLockIcon(),
             ],
@@ -364,6 +389,85 @@ class IncludedMovesScreen extends StatelessWidget {
         Icons.lock,
         color: Colors.white.withValues(alpha: 0.3),
         size: 20,
+      ),
+    );
+  }
+
+  Widget _buildAcademyLink(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          // Navigate to Academy screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LearningProgressScreen(),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                _academyPrimary,
+                _academySecondary.withValues(alpha: 0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _academyPrimary.withValues(alpha: 0.5),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _academyPrimary.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.school,
+                color: Colors.white,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  'To unlock more moves, visit the Academy',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward,
+                color: Colors.white.withValues(alpha: 0.9),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

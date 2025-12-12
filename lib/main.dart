@@ -407,6 +407,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Included Moves button (at top)
+            _buildIncludedMovesButton(),
+            const SizedBox(height: 24),
+
             // Rounds
             _buildRoundsStepper(),
             const SizedBox(height: 24),
@@ -437,10 +441,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // Intensity
             _buildIntensitySelector(),
-            const SizedBox(height: 32),
-
-            // Included Moves button
-            _buildIncludedMovesButton(),
           ],
         ),
       ),
