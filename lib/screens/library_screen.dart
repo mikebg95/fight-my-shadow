@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/screens/moves_screen.dart';
 import 'package:fight_my_shadow/screens/combinations_screen.dart';
 
-/// Library/Hub screen that provides access to moves, combinations, and other resources.
+/// Move Library screen that provides access to the moves catalog.
 ///
-/// This serves as the central navigation point for viewing training data,
-/// including the catalog of moves and predefined combinations.
+/// This screen shows all available boxing moves organized by category.
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
@@ -25,7 +24,7 @@ class LibraryScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
 
-                  // Moves card
+                  // Moves card - navigate directly to moves list
                   _LibraryCard(
                     title: 'Moves',
                     subtitle: 'Punches & kicks catalog',
@@ -41,28 +40,6 @@ class LibraryScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const MovesScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Combinations card
-                  _LibraryCard(
-                    title: 'Combinations',
-                    subtitle: 'Predefined strike sequences',
-                    icon: Icons.view_timeline,
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.purple.shade700,
-                        Colors.purple.shade500,
-                      ],
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CombinationsScreen(),
                         ),
                       );
                     },
@@ -103,7 +80,7 @@ class LibraryScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'LIBRARY',
+                  'MOVE LIBRARY',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w800,
@@ -111,7 +88,7 @@ class LibraryScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Training resources',
+                  'Browse boxing moves',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white.withOpacity(0.6),
                       ),

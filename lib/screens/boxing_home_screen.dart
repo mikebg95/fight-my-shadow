@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
+import 'package:fight_my_shadow/screens/combinations_screen.dart';
 import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
 
 /// Boxing home screen - hub for all boxing-specific features.
 ///
-/// Contains navigation to Academy, Training Session, and Library.
+/// Contains navigation to Academy, Training Session, Move Library, and Combinations.
 class BoxingHomeScreen extends StatelessWidget {
   const BoxingHomeScreen({super.key});
 
@@ -76,11 +77,11 @@ class BoxingHomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Library option
+                  // Move Library option
                   _buildOptionCard(
                     context,
-                    title: 'LIBRARY',
-                    subtitle: 'Browse moves and combinations',
+                    title: 'MOVE LIBRARY',
+                    subtitle: 'Browse boxing moves',
                     icon: Icons.library_books,
                     gradient: LinearGradient(
                       colors: [
@@ -94,6 +95,30 @@ class BoxingHomeScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const LibraryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Combinations option
+                  _buildOptionCard(
+                    context,
+                    title: 'COMBINATIONS',
+                    subtitle: 'Strike sequences',
+                    icon: Icons.view_timeline,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.amber.shade600,
+                        Colors.yellow.shade700,
+                      ],
+                    ),
+                    glowColor: Colors.amber.shade600,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CombinationsScreen(),
                         ),
                       );
                     },

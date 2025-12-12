@@ -30,14 +30,14 @@ class CombinationsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.purple.shade700,
-                              Colors.purple.shade500,
+                              Colors.amber.shade600,
+                              Colors.yellow.shade700,
                             ],
                           ),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.purple.shade700.withOpacity(0.3),
+                              color: Colors.amber.shade600.withOpacity(0.3),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
@@ -139,8 +139,8 @@ class CombinationsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.purple.shade700,
-                  Colors.purple.shade500,
+                  Colors.amber.shade600,
+                  Colors.yellow.shade700,
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
