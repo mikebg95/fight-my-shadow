@@ -107,7 +107,7 @@ class LearningProgressScreen extends StatelessWidget {
           ),
           const SizedBox(width: 16),
 
-          // Title
+          // Title and subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,11 +119,33 @@ class LearningProgressScreen extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  'Progress Path',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  'My Progress Path',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 13,
+                      ),
                 ),
               ],
+            ),
+          ),
+
+          // Academy logo icon (purple)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _academyPrimary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _academyPrimary.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: const Icon(
+              Icons.school,
+              color: _academyPrimary,
+              size: 24,
             ),
           ),
         ],
@@ -454,7 +476,7 @@ class LearningProgressScreen extends StatelessWidget {
             ? LearningPath.getMoveById(nextAction.moveId!)
             : null;
         buttonLabel = move != null
-            ? 'Next: ${move.displayName}'
+            ? '${move.displayName}: Drill'
             : 'Next';
         buttonIcon = Icons.arrow_forward;
         subtitleText = 'Open move details';
@@ -465,8 +487,8 @@ class LearningProgressScreen extends StatelessWidget {
             ? LearningPath.getMoveById(nextAction.moveId!)
             : null;
         buttonLabel = move != null
-            ? 'Next: Add to arsenal'
-            : 'Next: Add to arsenal';
+            ? '${move.displayName}: Add to arsenal'
+            : 'Add to arsenal';
         buttonIcon = Icons.add_circle;
         subtitleText = 'Practice this move';
         break;
@@ -478,7 +500,9 @@ class LearningProgressScreen extends StatelessWidget {
         final progress = nextAction.moveId != null
             ? learningState.getProgressForMove(nextAction.moveId!)
             : null;
-        buttonLabel = 'Do Progression Session';
+        buttonLabel = move != null
+            ? '${move.displayName}: Progression'
+            : 'Do Progression Session';
         buttonIcon = Icons.fitness_center;
 
         if (move != null && progress != null) {
@@ -491,7 +515,12 @@ class LearningProgressScreen extends StatelessWidget {
         break;
 
       case NextActionType.exam:
-        buttonLabel = 'Next: Exam';
+        final move = nextAction.moveId != null
+            ? LearningPath.getMoveById(nextAction.moveId!)
+            : null;
+        buttonLabel = move != null
+            ? '${move.displayName}: Exam'
+            : 'Exam';
         buttonIcon = Icons.assignment_turned_in;
         subtitleText = 'Prove your mastery';
         break;

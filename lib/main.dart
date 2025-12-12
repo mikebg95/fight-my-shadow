@@ -291,6 +291,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Training color palette (red)
+  static const _trainingPrimary = Color(0xFFD32F2F); // Red 700
+  static const _trainingSecondary = Color(0xFFEF5350); // Red 400
+
   // UI state for configuration
   int rounds = 3;
   int roundMinutes = 3;
@@ -379,8 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
+                  _trainingPrimary,
+                  _trainingSecondary,
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
@@ -408,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     letterSpacing: 1.5,
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: _trainingPrimary,
                   ),
             ),
             const SizedBox(height: 24),
@@ -488,7 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 '$rounds',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                       fontSize: 36,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: _trainingPrimary,
                     ),
               ),
               IconButton(
@@ -689,19 +693,19 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primary
+              ? _trainingPrimary
               : const Color(0xFF0F0F0F),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? Theme.of(context).colorScheme.primary
+                ? _trainingPrimary
                 : Colors.white.withOpacity(0.1),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    color: _trainingPrimary.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -852,15 +856,15 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
+                  _trainingPrimary,
+                  _trainingSecondary,
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: canStart
                   ? [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                        color: _trainingPrimary.withOpacity(0.4),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -1229,16 +1233,16 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       widget.config.mode == SessionMode.addToArsenal;
 
   /// Returns the primary color for the current session mode.
-  /// Academy sessions use purple, training sessions use orange.
+  /// Academy sessions use purple, training sessions use red.
   Color get _primaryColor => _isAcademySession
       ? const Color(0xFF9C27B0) // Purple for Academy
-      : const Color(0xFFFF5722); // Orange for Training
+      : const Color(0xFFD32F2F); // Red for Training
 
   /// Returns the secondary color for the current session mode.
-  /// Academy sessions use lighter purple, training sessions use lighter orange.
+  /// Academy sessions use lighter purple, training sessions use lighter red.
   Color get _secondaryColor => _isAcademySession
       ? const Color(0xFFBA68C8) // Light purple for Academy
-      : const Color(0xFFFF6E40); // Light orange for Training
+      : const Color(0xFFEF5350); // Light red for Training
 
   /// Returns the session title based on mode and target move.
   String get _sessionTitle {

@@ -95,9 +95,10 @@ class VoiceCoachService {
   ///
   /// Mapping:
   /// - Numbers: "1" → "one", "2" → "two", etc.
-  /// - Letters: "A" → "A" (TTS pronounces as "ay"), "B" → "B", etc.
+  /// - Letters: "A" → "ay", "B" → "bee", etc. (explicit phonetic mapping)
   ///
   /// This ensures we speak codes only, never move names.
+  /// Letters are explicitly mapped to prevent TTS from saying "capital <letter>".
   String _codeToSpokenWord(String code) {
     // Map numeric codes to spoken numbers
     const numberMap = {
@@ -117,14 +118,48 @@ class VoiceCoachService {
       '14': 'fourteen',
     };
 
+    // Map letter codes to phonetic pronunciations
+    // This prevents TTS from saying "capital P" etc.
+    const letterMap = {
+      'A': 'ay',
+      'B': 'bee',
+      'C': 'see',
+      'D': 'dee',
+      'E': 'ee',
+      'F': 'eff',
+      'G': 'gee',
+      'H': 'aitch',
+      'I': 'eye',
+      'J': 'jay',
+      'K': 'kay',
+      'L': 'ell',
+      'M': 'em',
+      'N': 'en',
+      'O': 'oh',
+      'P': 'pee',
+      'Q': 'cue',
+      'R': 'are',
+      'S': 'ess',
+      'T': 'tee',
+      'U': 'you',
+      'V': 'vee',
+      'W': 'double you',
+      'X': 'ex',
+      'Y': 'why',
+      'Z': 'zee',
+    };
+
     // Check if it's a number
     if (numberMap.containsKey(code)) {
       return numberMap[code]!;
     }
 
-    // For alphabetic codes (A-Z), return as-is
-    // TTS will pronounce letters naturally (A → "ay", B → "bee", etc.)
-    // This handles defense codes (A-M) and footwork codes (N-X)
+    // Check if it's a letter
+    if (letterMap.containsKey(code)) {
+      return letterMap[code]!;
+    }
+
+    // Fallback: return code as-is
     return code;
   }
 }
