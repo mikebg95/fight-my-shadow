@@ -343,7 +343,7 @@ class BoxingComboGenerator implements ComboGenerator {
   ///
   /// This method:
   /// - Only uses moves from [allowedMoveCodes] (unlocked moves + target move)
-  /// - Applies 5-8x weight to [targetMoveCode] so it appears 60-75% of the time
+  /// - Applies 6-10x weight to [targetMoveCode] so it appears 60-75% of the time
   /// - Follows same difficulty-based patterns as regular combo generation
   /// - Ensures valid combos according to boxing rules
   ///
@@ -399,7 +399,7 @@ class BoxingComboGenerator implements ComboGenerator {
 
   /// Returns a random move code from the specified category with weighting.
   ///
-  /// Only selects from [allowedMoveCodes]. The [targetMoveCode] gets 5-8x
+  /// Only selects from [allowedMoveCodes]. The [targetMoveCode] gets 6-10x
   /// weight compared to other moves in its category, ensuring it appears
   /// 60-75% of the time in generated combos.
   ///
@@ -435,9 +435,9 @@ class BoxingComboGenerator implements ComboGenerator {
       return null;
     }
 
-    // Build weighted pool: add target move 5-8x
+    // Build weighted pool: add target move 6-10x
     final weightedPool = <String>[];
-    final targetWeight = 5 + _random.nextInt(4); // 5-8x weight
+    final targetWeight = 6 + _random.nextInt(5); // 6-10x weight
 
     for (final move in allowedInCategory) {
       if (move.code == targetMoveCode) {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
@@ -8,6 +9,7 @@ import 'package:fight_my_shadow/domain/combos/combo.dart';
 import 'package:fight_my_shadow/domain/combos/boxing_combo_generator.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/services/voice_coach_service.dart';
+import 'package:fight_my_shadow/services/sound_effects_service.dart';
 import 'package:fight_my_shadow/controllers/workout_voice_controller.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/controllers/training_preferences_controller.dart';
@@ -967,8 +969,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   double _comboPhaseRemainingSeconds = 0.0;
   Combo? _previousCombo;
 
-  // Voice coaching
+  // Voice coaching and sound effects
   late WorkoutVoiceController _voiceController;
+  late SoundEffectsService _soundService;
+
+  // Drill/Arsenal-specific state
+  bool _isInGetReadyDelay = false;
+  double _getReadyRemainingSeconds = 0.0;
+  bool _shouldHideCombo = false;
+  double _comboHideDelaySeconds = 0.0;
 
   @override
   void initState() {
@@ -987,18 +996,34 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       _comboGenerator.setAllowedMoveCodes(widget.config.allowedMoveCodes);
     }
 
-    // Initialize voice coaching
+    // Initialize voice coaching and sound effects
     final voiceService = VoiceCoachService();
     _voiceController = WorkoutVoiceController(voiceService);
+    _soundService = SoundEffectsService();
+    _soundService.initialize();
+
+    // For Drill and Add-to-Arsenal: play bell and start with 3-second "Get Ready" delay
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+    if (isAcademyMode) {
+      _soundService.playBell();
+      _isInGetReadyDelay = true;
+      _getReadyRemainingSeconds = 3.0;
+    }
 
     _startTimer();
-    _startNewComboIfNeeded();
+
+    // Only start combo immediately if NOT in Academy mode
+    if (!isAcademyMode) {
+      _startNewComboIfNeeded();
+    }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _voiceController.dispose();
+    _soundService.dispose();
     super.dispose();
   }
 
@@ -1007,6 +1032,24 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isPaused && mounted) {
         setState(() {
+          // Handle "Get Ready" delay for Academy modes
+          if (_isInGetReadyDelay) {
+            _getReadyRemainingSeconds -= 1.0;
+            if (_getReadyRemainingSeconds <= 0) {
+              _isInGetReadyDelay = false;
+              _startNewComboIfNeeded(); // Start first callout after delay
+            }
+          }
+
+          // Handle combo hide delay (after TTS finishes)
+          if (_shouldHideCombo && _comboHideDelaySeconds > 0) {
+            _comboHideDelaySeconds -= 1.0;
+            if (_comboHideDelaySeconds <= 0) {
+              _shouldHideCombo = false;
+              _clearCombo(); // Hide the combo text
+            }
+          }
+
           // Update round timer
           if (remainingSeconds > 0) {
             remainingSeconds--;
@@ -1014,15 +1057,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             _handlePhaseTransition();
           }
 
-          // Update combo phase during active rounds
-          if (currentPhase == WorkoutPhase.round) {
+          // Update combo phase during active rounds (only if not in get-ready delay)
+          if (currentPhase == WorkoutPhase.round && !_isInGetReadyDelay) {
             _updateComboPhase(1.0); // 1 second elapsed
           }
         });
 
         // Update voice controller with current workout state
         _voiceController.update(
-          currentCombo: _currentCombo,
+          currentCombo: _shouldHideCombo ? null : _currentCombo,
           comboPhase: _comboPhase,
           workoutPhase: currentPhase,
           isPaused: isPaused,
@@ -1032,10 +1075,18 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   void _handlePhaseTransition() {
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+
     if (currentPhase == WorkoutPhase.round) {
-      // Just finished a round - clear combo state
+      // Just finished a round
       _clearCombo();
       _previousCombo = null;
+
+      // Play bell at round end (Academy modes only)
+      if (isAcademyMode) {
+        _soundService.playBell();
+      }
 
       if (currentRound < widget.config.rounds) {
         // Move to rest phase
@@ -1047,8 +1098,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         _timer?.cancel();
 
         // In academy modes (drill/arsenal), auto-return after brief delay
-        final isAcademyMode = widget.config.mode == SessionMode.drill ||
-                              widget.config.mode == SessionMode.addToArsenal;
         if (isAcademyMode) {
           Future.delayed(const Duration(milliseconds: 1500), () {
             if (mounted) {
@@ -1063,8 +1112,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       currentPhase = WorkoutPhase.round;
       remainingSeconds = widget.config.roundDurationSeconds;
 
-      // Start combo cycles for the new round
-      _startNewComboIfNeeded();
+      // For Academy modes: play bell and start with get-ready delay
+      if (isAcademyMode) {
+        _soundService.playBell();
+        _isInGetReadyDelay = true;
+        _getReadyRemainingSeconds = 3.0;
+      } else {
+        // Start combo immediately for normal training
+        _startNewComboIfNeeded();
+      }
     }
   }
 
@@ -1148,14 +1204,28 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   /// Calculates the announce phase duration based on combo length.
   /// Base duration + per-move duration.
+  /// Drill mode uses minimal announce times for frequent callouts.
   double _calculateAnnounceDuration(Combo combo) {
+    if (widget.config.mode == SessionMode.drill) {
+      // Drill mode: minimal announce time - just enough for TTS
+      // Total cycle should be dominated by recovery gap (1-5s)
+      return 0.3 + (combo.moveCodes.length * 0.15); // ~0.3-0.75s
+    }
+
     const baseSeconds = 1.0;
     const secondsPerMove = 0.3;
     return baseSeconds + (combo.moveCodes.length * secondsPerMove);
   }
 
   /// Calculates the execution phase duration based on difficulty and combo length.
+  /// Drill mode uses minimal execution times for frequent callouts.
   double _calculateExecutionDuration(Combo combo) {
+    if (widget.config.mode == SessionMode.drill) {
+      // Drill mode: minimal execution time
+      // Total cycle should be dominated by recovery gap (1-5s)
+      return combo.moveCodes.length * 0.4; // 0.4-1.2s
+    }
+
     // Time per move varies with difficulty
     double secondsPerMove;
     switch (widget.config.difficulty) {
@@ -1187,7 +1257,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   /// Calculates the recovery phase duration based on intensity.
+  /// Drill mode uses random recovery times for varied cadence (1-5 seconds).
+  /// Add-to-Arsenal mode uses random recovery times (3-7 seconds).
   double _calculateRecoveryDuration() {
+    if (widget.config.mode == SessionMode.drill) {
+      // Drill mode: random recovery between 1.0 and 5.0 seconds
+      final random = Random();
+      return 1.0 + random.nextDouble() * 4.0; // 1.0 to 5.0 seconds
+    }
+
+    if (widget.config.mode == SessionMode.addToArsenal) {
+      // Add-to-Arsenal mode: random recovery between 3.0 and 5.0 seconds
+      final random = Random();
+      return 3.0 + random.nextDouble() * 2.0; // 3.0 to 5.0 seconds
+    }
+
     switch (widget.config.intensity) {
       case Intensity.low:
         return 4.0; // Longer recovery for low intensity
@@ -1225,9 +1309,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     // Generate a new combo based on session mode
     final Combo newCombo;
     if (widget.config.mode == SessionMode.drill && widget.config.drillMoveCode != null) {
-      // In drill mode, create a simple combo with just the drill move
+      // In drill mode, create a combo with 1-3 repetitions of the drill move
+      // Probabilities: 70% single, 25% double, 5% triple
+      final random = Random();
+      final roll = random.nextDouble();
+      final int repetitions;
+      if (roll < 0.70) {
+        repetitions = 1; // 70%
+      } else if (roll < 0.95) {
+        repetitions = 2; // 25%
+      } else {
+        repetitions = 3; // 5%
+      }
+
       newCombo = Combo(
-        moveCodes: [widget.config.drillMoveCode!],
+        moveCodes: List.filled(repetitions, widget.config.drillMoveCode!),
         difficulty: widget.config.difficulty,
         name: 'Drill Practice',
       );
@@ -1253,6 +1349,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _currentCombo = newCombo;
     _comboPhase = ComboPhase.announce;
     _comboPhaseRemainingSeconds = _calculateAnnounceDuration(newCombo);
+
+    // Reset combo hiding state for new combo
+    _shouldHideCombo = false;
+    _comboHideDelaySeconds = 0.0;
   }
 
   /// Updates the combo phase based on elapsed time.
@@ -1279,6 +1379,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         // Move to execution
         _comboPhase = ComboPhase.execute;
         _comboPhaseRemainingSeconds = _calculateExecutionDuration(_currentCombo!);
+
+        // For Academy modes: trigger combo hiding after a short delay
+        final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                              widget.config.mode == SessionMode.addToArsenal;
+        if (isAcademyMode) {
+          _shouldHideCombo = true;
+          final random = Random();
+          _comboHideDelaySeconds = 1.0 + random.nextDouble(); // 1.0-2.0 seconds
+        }
         break;
 
       case ComboPhase.execute:
