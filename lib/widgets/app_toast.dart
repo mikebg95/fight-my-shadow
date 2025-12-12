@@ -10,26 +10,23 @@ enum ToastType {
 
 /// Centralized toast/snackbar utility for the app.
 ///
-/// Provides a premium, modern toast overlay that replaces default SnackBar.
-/// Features smooth animations, glassmorphic design, and tap-to-dismiss.
+/// Provides a clean, minimal, purely informational toast notification.
+/// Features smooth slide-up animation and subtle tinted background.
+/// No action buttons - just calm, non-intrusive messaging.
 class AppToast {
   static OverlayEntry? _currentOverlay;
 
-  /// Shows a premium toast notification.
+  /// Shows a purely informational toast notification.
   ///
   /// [context] - Build context
-  /// [message] - Message to display
+  /// [message] - Message to display (sentence case, single sentence)
   /// [type] - Toast type (error, success, info, warning)
-  /// [duration] - How long to show before auto-dismiss (default 2000ms)
-  /// [actionLabel] - Optional action button label
-  /// [onAction] - Optional action button callback
+  /// [duration] - How long to show before auto-dismiss (default 2500ms)
   static void show(
     BuildContext context,
     String message, {
-    ToastType type = ToastType.error,
-    Duration duration = const Duration(milliseconds: 2000),
-    String? actionLabel,
-    VoidCallback? onAction,
+    ToastType type = ToastType.info,
+    Duration duration = const Duration(milliseconds: 2500),
   }) {
     // Remove existing overlay if present
     _currentOverlay?.remove();
@@ -41,8 +38,6 @@ class AppToast {
       builder: (context) => _AppToastOverlay(
         message: message,
         type: type,
-        actionLabel: actionLabel,
-        onAction: onAction,
         onDismiss: () {
           overlay.remove();
           _currentOverlay = null;
@@ -64,39 +59,35 @@ class AppToast {
   }
 
   /// Convenience method for error toast
-  static void error(BuildContext context, String message, {String? actionLabel, VoidCallback? onAction}) {
-    show(context, message, type: ToastType.error, actionLabel: actionLabel, onAction: onAction);
+  static void error(BuildContext context, String message) {
+    show(context, message, type: ToastType.error);
   }
 
   /// Convenience method for success toast
-  static void success(BuildContext context, String message, {String? actionLabel, VoidCallback? onAction}) {
-    show(context, message, type: ToastType.success, actionLabel: actionLabel, onAction: onAction);
+  static void success(BuildContext context, String message) {
+    show(context, message, type: ToastType.success);
   }
 
   /// Convenience method for info toast
-  static void info(BuildContext context, String message, {String? actionLabel, VoidCallback? onAction}) {
-    show(context, message, type: ToastType.info, actionLabel: actionLabel, onAction: onAction);
+  static void info(BuildContext context, String message) {
+    show(context, message, type: ToastType.info);
   }
 
   /// Convenience method for warning toast
-  static void warning(BuildContext context, String message, {String? actionLabel, VoidCallback? onAction}) {
-    show(context, message, type: ToastType.warning, actionLabel: actionLabel, onAction: onAction);
+  static void warning(BuildContext context, String message) {
+    show(context, message, type: ToastType.warning);
   }
 }
 
-/// Modern toast overlay widget with animations
+/// Minimal informational toast overlay with slide-up animation
 class _AppToastOverlay extends StatefulWidget {
   final String message;
   final ToastType type;
-  final String? actionLabel;
-  final VoidCallback? onAction;
   final VoidCallback onDismiss;
 
   const _AppToastOverlay({
     required this.message,
     required this.type,
-    this.actionLabel,
-    this.onAction,
     required this.onDismiss,
   });
 
@@ -107,21 +98,25 @@ class _AppToastOverlay extends StatefulWidget {
 class _AppToastOverlayState extends State<_AppToastOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
   late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
       vsync: this,
     );
 
-    _scaleAnimation = CurvedAnimation(
+    // Slide up from below
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutBack,
-    );
+      curve: Curves.easeOutCubic,
+    ));
 
     _opacityAnimation = CurvedAnimation(
       parent: _controller,
@@ -153,26 +148,27 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
   IconData _getIcon() {
     switch (widget.type) {
       case ToastType.error:
-        return Icons.error_rounded;
+        return Icons.info_outline_rounded;
       case ToastType.success:
-        return Icons.check_circle_rounded;
+        return Icons.check_circle_outline_rounded;
       case ToastType.info:
-        return Icons.info_rounded;
+        return Icons.info_outline_rounded;
       case ToastType.warning:
-        return Icons.warning_rounded;
+        return Icons.info_outline_rounded;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _getColor();
+    final themeColor = _getColor();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + 20,
-      left: 20,
-      right: 20,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
+      left: 24,
+      right: 24,
+      child: SlideTransition(
+        position: _slideAnimation,
         child: AnimatedBuilder(
           animation: _opacityAnimation,
           builder: (context, child) {
@@ -185,114 +181,55 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
           },
           child: GestureDetector(
             onTap: () {
-              // Dismiss on tap
+              // Tap to dismiss
               _controller.reverse().then((_) => widget.onDismiss());
             },
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      color,
-                      color.withValues(alpha: 0.9),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: BoxDecoration(
+                // Subtle tinted background (10-15% opacity)
+                color: isDark
+                    ? themeColor.withValues(alpha: 0.15)
+                    : themeColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: themeColor.withValues(alpha: 0.3),
+                  width: 1,
                 ),
-                child: Row(
-                  children: [
-                    // Icon
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _getIcon(),
-                        color: Colors.white,
-                        size: 24,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Small muted icon
+                  Icon(
+                    _getIcon(),
+                    color: themeColor.withValues(alpha: 0.8),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  // Message text
+                  Expanded(
+                    child: Text(
+                      widget.message,
+                      style: TextStyle(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.95)
+                            : Colors.black.withValues(alpha: 0.9),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.1,
+                        height: 1.4,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    // Message text
-                    Expanded(
-                      child: Text(
-                        widget.message,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Action button or close icon
-                    if (widget.actionLabel != null && widget.onAction != null)
-                      GestureDetector(
-                        onTap: () {
-                          widget.onAction!();
-                          _controller.reverse().then((_) => widget.onDismiss());
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            widget.actionLabel!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      GestureDetector(
-                        onTap: () {
-                          _controller.reverse().then((_) => widget.onDismiss());
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

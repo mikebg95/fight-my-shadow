@@ -992,14 +992,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }
                     : () {
-                        // Show error message
-                        AppToast.error(
+                        // Show informational message
+                        AppToast.info(
                           context,
-                          'Select at least one unlocked move to start training',
-                          actionLabel: 'GO TO ACADEMY',
-                          onAction: () {
-                            Navigator.pushNamed(context, '/academy');
-                          },
+                          'Select at least one unlocked move',
                         );
                       },
                 borderRadius: BorderRadius.circular(16),
