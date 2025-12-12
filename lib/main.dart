@@ -98,11 +98,25 @@ class FightMyShadowApp extends StatelessWidget {
   }
 }
 
+// Session Mode Enum
+enum SessionMode {
+  training,     // Regular training session with all moves
+  drill,        // Focused drill on a single move
+  addToArsenal, // Academy session integrating newly drilled move
+}
+
 // Drill Session Result
 class DrillSessionResult {
   final bool completed;
 
   const DrillSessionResult({required this.completed});
+}
+
+// Add to Arsenal Session Result
+class AddToArsenalSessionResult {
+  final bool completed;
+
+  const AddToArsenalSessionResult({required this.completed});
 }
 
 // Workout Configuration Model
@@ -112,8 +126,10 @@ class WorkoutConfiguration {
   final int restDurationSeconds;
   final Difficulty difficulty;
   final Intensity intensity;
-  final bool isDrillMode;
+  final SessionMode mode;
   final String? drillMoveCode; // Single move code for drill mode
+  final String? arsenalTargetMoveCode; // Target move code for arsenal mode
+  final List<String>? allowedMoveCodes; // Allowed moves for arsenal mode (unlocked + target)
 
   WorkoutConfiguration({
     required this.rounds,
@@ -121,9 +137,14 @@ class WorkoutConfiguration {
     required this.restDurationSeconds,
     required this.difficulty,
     required this.intensity,
-    this.isDrillMode = false,
+    this.mode = SessionMode.training,
     this.drillMoveCode,
+    this.arsenalTargetMoveCode,
+    this.allowedMoveCodes,
   });
+
+  // Backward compatibility: legacy isDrillMode getter
+  bool get isDrillMode => mode == SessionMode.drill;
 
   /// Factory for creating a drill session configuration
   factory WorkoutConfiguration.drill({
@@ -136,8 +157,59 @@ class WorkoutConfiguration {
       restDurationSeconds: 0,
       difficulty: difficulty,
       intensity: Intensity.medium, // Fixed for drills
-      isDrillMode: true,
+      mode: SessionMode.drill,
       drillMoveCode: moveCode,
+    );
+  }
+
+  /// Factory for creating an Add to Arsenal session configuration
+  ///
+  /// Round structure based on Academy level:
+  /// - Level 1: 1 round × 2 minutes
+  /// - Level 2: 2 rounds × 2 minutes
+  /// - Level 3: 3 rounds × 2 minutes
+  /// - Level 4 & 5: 3 rounds × 3 minutes
+  /// - Level 6 & 7: 4 rounds × 3 minutes
+  /// - Level 8-12: 5 rounds × 3 minutes
+  factory WorkoutConfiguration.addToArsenal({
+    required String targetMoveCode,
+    required List<String> allowedMoveCodes,
+    required Difficulty difficulty,
+    required int academyLevel, // 1-12
+  }) {
+    int rounds;
+    int roundDurationSeconds;
+
+    if (academyLevel == 1) {
+      rounds = 1;
+      roundDurationSeconds = 120; // 2 minutes
+    } else if (academyLevel == 2) {
+      rounds = 2;
+      roundDurationSeconds = 120;
+    } else if (academyLevel == 3) {
+      rounds = 3;
+      roundDurationSeconds = 120;
+    } else if (academyLevel == 4 || academyLevel == 5) {
+      rounds = 3;
+      roundDurationSeconds = 180; // 3 minutes
+    } else if (academyLevel == 6 || academyLevel == 7) {
+      rounds = 4;
+      roundDurationSeconds = 180;
+    } else {
+      // academyLevel 8-12
+      rounds = 5;
+      roundDurationSeconds = 180;
+    }
+
+    return WorkoutConfiguration(
+      rounds: rounds,
+      roundDurationSeconds: roundDurationSeconds,
+      restDurationSeconds: 60, // 1 minute rest between rounds
+      difficulty: difficulty,
+      intensity: Intensity.medium, // Fixed for academy sessions
+      mode: SessionMode.addToArsenal,
+      arsenalTargetMoveCode: targetMoveCode,
+      allowedMoveCodes: allowedMoveCodes,
     );
   }
 }
@@ -776,8 +848,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         currentPhase = WorkoutPhase.complete;
         _timer?.cancel();
 
-        // In drill mode, auto-return after brief delay
-        if (widget.config.isDrillMode) {
+        // In academy modes (drill/arsenal), auto-return after brief delay
+        final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                              widget.config.mode == SessionMode.addToArsenal;
+        if (isAcademyMode) {
           Future.delayed(const Duration(milliseconds: 1500), () {
             if (mounted) {
               _endWorkout(completed: true);
@@ -816,23 +890,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _clearCombo();
     _previousCombo = null;
 
-    // For drill mode, return result to previous screen
-    if (widget.config.isDrillMode) {
+    // Return appropriate result based on session mode
+    if (widget.config.mode == SessionMode.drill) {
       Navigator.pop(context, DrillSessionResult(completed: completed));
+    } else if (widget.config.mode == SessionMode.addToArsenal) {
+      Navigator.pop(context, AddToArsenalSessionResult(completed: completed));
     } else {
       Navigator.pop(context);
     }
   }
 
   Future<bool> _onWillPop() async {
-    // In drill mode, show confirmation if workout is in progress
-    if (widget.config.isDrillMode && currentPhase != WorkoutPhase.complete) {
+    // In drill or arsenal mode, show confirmation if workout is in progress
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+
+    if (isAcademyMode && currentPhase != WorkoutPhase.complete) {
+      final modeName = widget.config.mode == SessionMode.drill ? 'drill' : 'arsenal session';
       final shouldExit = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: const Color(0xFF1A1A1A),
-          title: const Text('Exit drill?'),
-          content: const Text('Your drill won\'t count if you leave early.'),
+          title: Text('Exit $modeName?'),
+          content: Text('Your $modeName won\'t count if you leave early.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -944,14 +1024,24 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return;
     }
 
-    // Generate a new combo
+    // Generate a new combo based on session mode
     final Combo newCombo;
-    if (widget.config.isDrillMode && widget.config.drillMoveCode != null) {
+    if (widget.config.mode == SessionMode.drill && widget.config.drillMoveCode != null) {
       // In drill mode, create a simple combo with just the drill move
       newCombo = Combo(
         moveCodes: [widget.config.drillMoveCode!],
         difficulty: widget.config.difficulty,
         name: 'Drill Practice',
+      );
+    } else if (widget.config.mode == SessionMode.addToArsenal &&
+               widget.config.arsenalTargetMoveCode != null &&
+               widget.config.allowedMoveCodes != null) {
+      // In arsenal mode, use weighted combo generation
+      newCombo = _comboGenerator.generateArsenalCombo(
+        difficulty: widget.config.difficulty,
+        targetMoveCode: widget.config.arsenalTargetMoveCode!,
+        allowedMoveCodes: widget.config.allowedMoveCodes!,
+        previousCombo: _previousCombo,
       );
     } else {
       // Normal training mode - generate varied combos

@@ -85,25 +85,44 @@ class MoveDetailScreen extends StatelessWidget {
 
     if (targetLearningMove == null) return;
 
-    // For now, show a placeholder dialog
-    // TODO: Start lightweight practice session with unlocked moves
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add to Arsenal'),
-        content: Text('Starting practice session for ${move.name} with unlocked moves!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
+    // Get all unlocked moves from learning state
+    final controller = context.read<StoryModeController>();
+    final learningState = controller.state;
+
+    // Collect all unlocked move codes
+    final unlockedMoveCodes = <String>[];
+    final moveRepository = InMemoryMoveRepository();
+
+    for (final learningMove in allLearningMoves) {
+      final progress = learningState.getProgressForMove(learningMove.id);
+      if (progress != null && progress.isUnlocked) {
+        // Add all move codes from this learning move
+        unlockedMoveCodes.addAll(learningMove.moveCodes);
+      }
+    }
+
+    // Add the target move code (even though it's not unlocked yet)
+    final allowedMoveCodes = [...unlockedMoveCodes, move.code];
+
+    // Launch Arsenal session with weighted combo generation
+    final config = WorkoutConfiguration.addToArsenal(
+      targetMoveCode: move.code,
+      allowedMoveCodes: allowedMoveCodes,
+      difficulty: Difficulty.beginner, // Always beginner for learning sessions
+      academyLevel: targetLearningMove.level,
+    );
+
+    final result = await Navigator.push<AddToArsenalSessionResult>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WorkoutScreen(config: config),
       ),
     );
 
-    // After "add to arsenal" session, unlock the move
-    final controller = context.read<StoryModeController>();
-    await controller.unlockMove(targetLearningMove.id);
+    // If arsenal session was completed, mark it as done and unlock the move
+    if (result != null && result.completed) {
+      await controller.markAddToArsenalDone(targetLearningMove.id);
+    }
   }
 
   @override

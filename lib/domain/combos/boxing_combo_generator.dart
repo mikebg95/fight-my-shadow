@@ -321,4 +321,120 @@ class BoxingComboGenerator implements ComboGenerator {
 
     return true;
   }
+
+  /// Generates a combo for Add to Arsenal mode with weighted target move selection.
+  ///
+  /// This method:
+  /// - Only uses moves from [allowedMoveCodes] (unlocked moves + target move)
+  /// - Applies 5-8x weight to [targetMoveCode] so it appears 60-75% of the time
+  /// - Follows same difficulty-based patterns as regular combo generation
+  /// - Ensures valid combos according to boxing rules
+  ///
+  /// The weighting is implemented by including the target move multiple times
+  /// in the selection pool when picking random moves from a category.
+  Combo generateArsenalCombo({
+    required Difficulty difficulty,
+    required String targetMoveCode,
+    required List<String> allowedMoveCodes,
+    Combo? previousCombo,
+  }) {
+    // Pick a random pattern for this difficulty
+    final pattern = _selectRandomPattern(difficulty);
+
+    // Build the combo using the weighted selection
+    final codes = <String>[];
+    for (final category in pattern) {
+      final code = _randomMoveCodeFromCategoryWeighted(
+        category,
+        targetMoveCode: targetMoveCode,
+        allowedMoveCodes: allowedMoveCodes,
+      );
+      if (code != null) {
+        codes.add(code);
+      }
+    }
+
+    // Validate the generated combo
+    var validatedCodes = _ensureValidCombo(codes);
+
+    // If identical to previous combo, regenerate once
+    if (previousCombo != null && _isIdenticalCombo(validatedCodes, previousCombo.moveCodes)) {
+      final retryPattern = _selectRandomPattern(difficulty);
+      final retryCodes = <String>[];
+      for (final category in retryPattern) {
+        final code = _randomMoveCodeFromCategoryWeighted(
+          category,
+          targetMoveCode: targetMoveCode,
+          allowedMoveCodes: allowedMoveCodes,
+        );
+        if (code != null) {
+          retryCodes.add(code);
+        }
+      }
+      validatedCodes = _ensureValidCombo(retryCodes);
+    }
+
+    return Combo(
+      moveCodes: validatedCodes,
+      difficulty: difficulty,
+    );
+  }
+
+  /// Returns a random move code from the specified category with weighting.
+  ///
+  /// Only selects from [allowedMoveCodes]. The [targetMoveCode] gets 5-8x
+  /// weight compared to other moves in its category, ensuring it appears
+  /// 60-75% of the time in generated combos.
+  ///
+  /// Returns null if no allowed moves exist in this category.
+  String? _randomMoveCodeFromCategoryWeighted(
+    MoveCategory category, {
+    required String targetMoveCode,
+    required List<String> allowedMoveCodes,
+  }) {
+    // Get all moves in this category
+    List<Move> categoryMoves;
+    switch (category) {
+      case MoveCategory.punch:
+        categoryMoves = _repository.getAllPunches();
+        break;
+      case MoveCategory.defense:
+        categoryMoves = _repository.getAllDefense();
+        break;
+      case MoveCategory.footwork:
+        categoryMoves = _repository.getAllFootwork();
+        break;
+      case MoveCategory.deception:
+        categoryMoves = _repository.getMovesByCategory(MoveCategory.deception);
+        break;
+    }
+
+    // Filter to only allowed moves
+    final allowedInCategory = categoryMoves
+        .where((move) => allowedMoveCodes.contains(move.code))
+        .toList();
+
+    if (allowedInCategory.isEmpty) {
+      return null;
+    }
+
+    // Build weighted pool: add target move 5-8x
+    final weightedPool = <String>[];
+    final targetWeight = 5 + _random.nextInt(4); // 5-8x weight
+
+    for (final move in allowedInCategory) {
+      if (move.code == targetMoveCode) {
+        // Add target move multiple times for weighting
+        for (int i = 0; i < targetWeight; i++) {
+          weightedPool.add(move.code);
+        }
+      } else {
+        // Add other moves once
+        weightedPool.add(move.code);
+      }
+    }
+
+    // Select randomly from weighted pool
+    return weightedPool[_random.nextInt(weightedPool.length)];
+  }
 }
