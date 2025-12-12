@@ -38,6 +38,13 @@ class Combo {
   /// Example: "A fundamental combination that sets up with a jab and follows with power."
   final String? description;
 
+  /// Optional sequence ID to uniquely identify this combo instance.
+  ///
+  /// Used to distinguish between different instances of the same combo codes,
+  /// particularly in drill mode where the same move repeats.
+  /// If null, voice deduplication relies on move codes only.
+  final int? sequenceId;
+
   /// Creates a new Combo.
   ///
   /// The [moveCodes] list is required and must not be empty in practice,
@@ -47,6 +54,7 @@ class Combo {
     this.difficulty,
     this.name,
     this.description,
+    this.sequenceId,
   });
 
   /// Creates a copy of this combo with optional field replacements.
@@ -55,12 +63,14 @@ class Combo {
     Difficulty? difficulty,
     String? name,
     String? description,
+    int? sequenceId,
   }) {
     return Combo(
       moveCodes: moveCodes ?? this.moveCodes,
       difficulty: difficulty ?? this.difficulty,
       name: name ?? this.name,
       description: description ?? this.description,
+      sequenceId: sequenceId ?? this.sequenceId,
     );
   }
 
@@ -85,7 +95,8 @@ class Combo {
 
     return difficulty == other.difficulty &&
         name == other.name &&
-        description == other.description;
+        description == other.description &&
+        sequenceId == other.sequenceId;
   }
 
   @override
@@ -94,6 +105,6 @@ class Combo {
     for (final code in moveCodes) {
       codesHash ^= code.hashCode;
     }
-    return Object.hash(codesHash, difficulty, name, description);
+    return Object.hash(codesHash, difficulty, name, description, sequenceId);
   }
 }

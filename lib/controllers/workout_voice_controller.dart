@@ -100,6 +100,9 @@ class WorkoutVoiceController {
   // ========== Private Methods ==========
 
   /// Checks if the current combo is different from the previous one.
+  ///
+  /// Uses sequenceId when available (for drill mode) to ensure every combo instance
+  /// is considered new, even if move codes are identical.
   bool _isNewCombo(Combo? currentCombo) {
     // No combo → not new
     if (currentCombo == null) {
@@ -111,7 +114,13 @@ class WorkoutVoiceController {
       return true;
     }
 
-    // Compare combo codes
+    // If both combos have sequence IDs, compare those first
+    // This ensures drill mode speaks every combo, even identical codes
+    if (currentCombo.sequenceId != null && _previousCombo!.sequenceId != null) {
+      return currentCombo.sequenceId != _previousCombo!.sequenceId;
+    }
+
+    // Fallback: Compare combo codes (for combos without sequence IDs)
     final currentCodes = currentCombo.moveCodes;
     final previousCodes = _previousCombo!.moveCodes;
 

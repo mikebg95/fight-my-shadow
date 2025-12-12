@@ -982,6 +982,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isComboVisible = true;
   double _comboHideDelaySeconds = 0.0;
 
+  // Combo sequence counter for unique identification
+  // Increments each time a new combo is created, ensuring voice speaks every combo
+  int _comboSequenceCounter = 0;
+
   @override
   void initState() {
     super.initState();
@@ -1199,6 +1203,26 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     return true;
   }
 
+  /// Determines whether the combo card should be shown.
+  ///
+  /// In Academy modes (Drill/Arsenal), only show card when:
+  /// - During rest phase, OR
+  /// - Combo is visible (has text to display)
+  ///
+  /// In Training mode, always show the card.
+  bool get _shouldShowComboCard {
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+
+    if (!isAcademyMode) {
+      // Training mode: always show card
+      return true;
+    }
+
+    // Academy modes: show only when rest or combo is visible
+    return currentPhase == WorkoutPhase.rest || _isComboVisible;
+  }
+
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -1262,13 +1286,25 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   /// Calculates the recovery phase duration based on intensity.
-  /// Drill mode uses random recovery times for varied cadence (1-5 seconds).
-  /// Add-to-Arsenal mode uses random recovery times (3-7 seconds).
+  /// Drill mode uses controlled recovery to keep total cycle time 3-5 seconds.
+  /// Add-to-Arsenal mode uses random recovery times (3-5 seconds).
   double _calculateRecoveryDuration() {
-    if (widget.config.mode == SessionMode.drill) {
-      // Drill mode: random recovery between 1.0 and 5.0 seconds
+    if (widget.config.mode == SessionMode.drill && _currentCombo != null) {
+      // Drill mode: calculate recovery to keep total cycle in 3-5 second range
+      final announceDuration = _calculateAnnounceDuration(_currentCombo!);
+      final executeDuration = _calculateExecutionDuration(_currentCombo!);
+
+      // Target cycle time: random between 3.0 and 5.0 seconds
       final random = Random();
-      return 1.0 + random.nextDouble() * 4.0; // 1.0 to 5.0 seconds
+      final targetCycle = 3.0 + random.nextDouble() * 2.0; // 3.0-5.0s
+
+      // Calculate needed recovery time
+      double recovery = targetCycle - announceDuration - executeDuration;
+
+      // Clamp recovery to reasonable bounds (min 0.6s, max 3.0s)
+      recovery = recovery.clamp(0.6, 3.0);
+
+      return recovery;
     }
 
     if (widget.config.mode == SessionMode.addToArsenal) {
@@ -1327,27 +1363,32 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         repetitions = 3; // 5%
       }
 
+      // Assign unique sequence ID to ensure voice speaks every combo
+      _comboSequenceCounter++;
       newCombo = Combo(
         moveCodes: List.filled(repetitions, widget.config.drillMoveCode!),
         difficulty: widget.config.difficulty,
         name: 'Drill Practice',
+        sequenceId: _comboSequenceCounter,
       );
     } else if (widget.config.mode == SessionMode.addToArsenal &&
                widget.config.arsenalTargetMoveCode != null &&
                widget.config.allowedMoveCodes != null) {
       // In arsenal mode, use weighted combo generation
+      _comboSequenceCounter++;
       newCombo = _comboGenerator.generateArsenalCombo(
         difficulty: widget.config.difficulty,
         targetMoveCode: widget.config.arsenalTargetMoveCode!,
         allowedMoveCodes: widget.config.allowedMoveCodes!,
         previousCombo: _previousCombo,
-      );
+      ).copyWith(sequenceId: _comboSequenceCounter);
     } else {
       // Normal training mode - generate varied combos
+      _comboSequenceCounter++;
       newCombo = _comboGenerator.generateCombo(
         difficulty: widget.config.difficulty,
         previousCombo: _previousCombo,
-      );
+      ).copyWith(sequenceId: _comboSequenceCounter);
     }
 
     // Start the announce phase
@@ -1467,9 +1508,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       _buildTimer(),
                       const SizedBox(height: 24),
 
-                      // Combo display
-                      _buildComboCard(),
-                      const SizedBox(height: 24),
+                      // Combo display (conditionally shown in Academy modes)
+                      if (_shouldShowComboCard) ...[
+                        _buildComboCard(),
+                        const SizedBox(height: 24),
+                      ],
 
                       // Configuration summary
                       _buildConfigSummary(),
