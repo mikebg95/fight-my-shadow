@@ -391,6 +391,35 @@ class BoxingComboGenerator implements ComboGenerator {
       validatedCodes = _ensureValidCombo(retryCodes);
     }
 
+    // GUARANTEE target move appears: if it's not in the combo, insert it
+    if (!validatedCodes.contains(targetMoveCode)) {
+      // Find the target move from repository to determine its category
+      final targetMove = _repository.getMoveByCode(targetMoveCode);
+
+      if (targetMove != null && targetMove.category == MoveCategory.punch) {
+        // Replace a punch with the target, or add it if no punches
+        final punchIndices = <int>[];
+        for (int i = 0; i < validatedCodes.length; i++) {
+          final move = _repository.getMoveByCode(validatedCodes[i]);
+          if (move != null && move.category == MoveCategory.punch) {
+            punchIndices.add(i);
+          }
+        }
+        if (punchIndices.isNotEmpty) {
+          // Replace a random punch
+          final replaceIndex = punchIndices[_random.nextInt(punchIndices.length)];
+          validatedCodes[replaceIndex] = targetMoveCode;
+        } else {
+          // No punches, add target at end (shouldn't happen after ensureValidCombo)
+          validatedCodes.add(targetMoveCode);
+        }
+      } else {
+        // For defense/footwork targets (or unknown moves), add at a random position
+        final insertIndex = validatedCodes.isEmpty ? 0 : _random.nextInt(validatedCodes.length + 1);
+        validatedCodes.insert(insertIndex, targetMoveCode);
+      }
+    }
+
     return Combo(
       moveCodes: validatedCodes,
       difficulty: difficulty,

@@ -4,10 +4,10 @@ import 'learning_path.dart';
 
 /// Represents the entire Story Mode learning progress for a user.
 ///
-/// Contains progress for all 18 learning moves and computed properties
+/// Contains progress for all learning moves (37 total) and computed properties
 /// for current move and overall completion status.
 class LearningState {
-  /// Progress for all 18 learning moves (indexed by moveId - 1)
+  /// Progress for all learning moves in the path
   final List<LearningMoveProgress> moveProgress;
 
   const LearningState({
@@ -30,14 +30,18 @@ class LearningState {
     return null; // All moves unlocked
   }
 
-  /// Returns true when all 18 moves are unlocked.
+  /// Returns true when all moves are unlocked.
   bool get learningComplete {
     return moveProgress.every((progress) => progress.isUnlocked);
   }
 
-  /// Gets the progress for a specific move by ID (1-18).
+  /// Gets the progress for a specific move by ID (1-37).
+  /// Returns null if moveId is invalid or not found.
   LearningMoveProgress? getProgressForMove(int moveId) {
-    if (moveId < 1 || moveId > 18) return null;
+    // Validate against actual learning path size
+    final totalMoves = LearningPath.totalMoves;
+    if (moveId < 1 || moveId > totalMoves) return null;
+
     try {
       return moveProgress.firstWhere(
         (p) => p.moveId == moveId,

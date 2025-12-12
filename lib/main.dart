@@ -976,7 +976,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   // Drill/Arsenal-specific state
   bool _isInGetReadyDelay = false;
   double _getReadyRemainingSeconds = 0.0;
-  bool _shouldHideCombo = false;
+
+  // UI visibility state (separate from engine state)
+  // This controls whether combo text is shown, but does NOT affect the combo state machine
+  bool _isComboVisible = true;
   double _comboHideDelaySeconds = 0.0;
 
   @override
@@ -1042,11 +1045,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           }
 
           // Handle combo hide delay (after TTS finishes)
-          if (_shouldHideCombo && _comboHideDelaySeconds > 0) {
+          // This ONLY hides the UI, does NOT clear the engine state
+          if (!_isComboVisible && _comboHideDelaySeconds > 0) {
             _comboHideDelaySeconds -= 1.0;
             if (_comboHideDelaySeconds <= 0) {
-              _shouldHideCombo = false;
-              _clearCombo(); // Hide the combo text
+              // Combo text stays hidden - no action needed
+              // The combo engine continues running
             }
           }
 
@@ -1064,8 +1068,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         });
 
         // Update voice controller with current workout state
+        // Always pass the actual combo to voice controller (engine state, not UI state)
         _voiceController.update(
-          currentCombo: _shouldHideCombo ? null : _currentCombo,
+          currentCombo: _currentCombo,
           comboPhase: _comboPhase,
           workoutPhase: currentPhase,
           isPaused: isPaused,
@@ -1350,9 +1355,20 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _comboPhase = ComboPhase.announce;
     _comboPhaseRemainingSeconds = _calculateAnnounceDuration(newCombo);
 
-    // Reset combo hiding state for new combo
-    _shouldHideCombo = false;
+    // Reset UI visibility for new combo
+    _isComboVisible = true;
     _comboHideDelaySeconds = 0.0;
+
+    // Immediately trigger voice for this new combo (event-driven, not timer-based)
+    // This ensures voice speaks even for very short announce durations (<1s in drill mode)
+    if (!isPaused && currentPhase == WorkoutPhase.round) {
+      _voiceController.update(
+        currentCombo: _currentCombo,
+        comboPhase: ComboPhase.announce,
+        workoutPhase: currentPhase,
+        isPaused: false,
+      );
+    }
   }
 
   /// Updates the combo phase based on elapsed time.
@@ -1380,11 +1396,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         _comboPhase = ComboPhase.execute;
         _comboPhaseRemainingSeconds = _calculateExecutionDuration(_currentCombo!);
 
-        // For Academy modes: trigger combo hiding after a short delay
+        // For Academy modes: start hiding combo UI after a short delay
         final isAcademyMode = widget.config.mode == SessionMode.drill ||
                               widget.config.mode == SessionMode.addToArsenal;
         if (isAcademyMode) {
-          _shouldHideCombo = true;
+          _isComboVisible = false; // Mark as hidden (UI only)
           final random = Random();
           _comboHideDelaySeconds = 1.0 + random.nextDouble(); // 1.0-2.0 seconds
         }
@@ -1584,6 +1600,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   Widget _buildConfigSummary() {
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1615,20 +1634,23 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildConfigItem(
-                  'Difficulty',
-                  widget.config.difficulty.label,
-                ),
-                _buildConfigItem(
-                  'Intensity',
-                  widget.config.intensity.label,
-                ),
-              ],
-            ),
+            // Only show Difficulty and Intensity for Training mode, not for Drill/Arsenal
+            if (!isAcademyMode) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildConfigItem(
+                    'Difficulty',
+                    widget.config.difficulty.label,
+                  ),
+                  _buildConfigItem(
+                    'Intensity',
+                    widget.config.intensity.label,
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1640,16 +1662,26 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     String mainText;
     String? secondaryText;
 
+    final isAcademyMode = widget.config.mode == SessionMode.drill ||
+                          widget.config.mode == SessionMode.addToArsenal;
+
     if (currentPhase == WorkoutPhase.rest) {
       // During rest phase
       mainText = 'Rest';
       secondaryText = null;
-    } else if (_currentCombo == null || _comboPhase == ComboPhase.idle) {
-      // No active combo
-      mainText = 'Ready';
-      secondaryText = null;
+    } else if (_currentCombo == null || _comboPhase == ComboPhase.idle || !_isComboVisible) {
+      // No active combo OR combo is hidden (academy modes hide after voice)
+      if (isAcademyMode) {
+        // Academy modes: show blank/empty instead of "Ready"
+        mainText = '';
+        secondaryText = null;
+      } else {
+        // Training mode: show "Ready"
+        mainText = 'Ready';
+        secondaryText = null;
+      }
     } else {
-      // Active combo - display codes and names
+      // Active combo - display codes and names (only when visible)
       final codes = _currentCombo!.moveCodes;
 
       // Join codes with separator

@@ -76,6 +76,14 @@ class LearningProgressService {
       return NextAction.addToArsenal(currentMove.id);
     }
 
+    // Special case: Jab (moveId == 1) skips exam and progression
+    // After add-to-arsenal is done, it's automatically unlocked
+    if (currentMove.id == 1 && progress.addToArsenalDone) {
+      // Move should be unlocked by now (completeAddToArsenal handles this)
+      // This state shouldn't be reached, but return complete as safeguard
+      return NextAction.complete();
+    }
+
     final requiredSessions = getRequiredProgressionSessions(currentMove.level);
     if (progress.progressionSessionsDone < requiredSessions) {
       return NextAction.progression(currentMove.id);
@@ -107,11 +115,23 @@ class LearningProgressService {
   /// Marks the Add to Arsenal session as completed for a specific move.
   ///
   /// Returns updated state with addToArsenalDone set to true.
-  /// The move is NOT unlocked yet - user must pass the exam.
+  /// Special case: Jab (moveId == 1) skips exam and is immediately unlocked.
+  /// Other moves require exam to unlock.
   static LearningState completeAddToArsenal(LearningState state, int moveId) {
     final progress = state.getProgressForMove(moveId);
     if (progress == null) return state;
 
+    // Special case: Jab (first move) skips exam
+    if (moveId == 1) {
+      final updatedProgress = progress.copyWith(
+        addToArsenalDone: true,
+        examPassed: true, // Skip exam requirement
+        isUnlocked: true, // Immediately unlock
+      );
+      return state.updateMoveProgress(moveId, updatedProgress);
+    }
+
+    // All other moves: complete add-to-arsenal but still require exam
     final updatedProgress = progress.copyWith(
       addToArsenalDone: true,
     );
