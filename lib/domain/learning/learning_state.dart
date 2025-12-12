@@ -38,10 +38,13 @@ class LearningState {
   /// Gets the progress for a specific move by ID (1-18).
   LearningMoveProgress? getProgressForMove(int moveId) {
     if (moveId < 1 || moveId > 18) return null;
-    return moveProgress.firstWhere(
-      (p) => p.moveId == moveId,
-      orElse: () => LearningMoveProgress.initial(moveId),
-    );
+    try {
+      return moveProgress.firstWhere(
+        (p) => p.moveId == moveId,
+      );
+    } catch (e) {
+      return LearningMoveProgress.initial(moveId);
+    }
   }
 
   /// Creates a new LearningState with updated progress for a specific move.
