@@ -1147,22 +1147,22 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!isPaused && mounted) {
         setState(() {
-          // Handle "Get Ready" delay for Academy modes
-          if (_isInGetReadyDelay) {
-            _getReadyRemainingSeconds -= 1.0;
-            if (_getReadyRemainingSeconds <= 0) {
-              _isInGetReadyDelay = false;
-              _startNewComboIfNeeded(); // Start first callout after delay
-            }
-          }
-
-          // Handle combo auto-hide timer
+          // Handle combo auto-hide timer FIRST (before starting new combos)
           // This ONLY hides the UI, does NOT affect combo engine state
           if (_isComboVisible && _comboHideDelaySeconds > 0) {
             _comboHideDelaySeconds -= 1.0;
             if (_comboHideDelaySeconds <= 0) {
               // Hide the combo text from display
               _isComboVisible = false;
+            }
+          }
+
+          // Handle "Get Ready" delay for Academy modes
+          if (_isInGetReadyDelay) {
+            _getReadyRemainingSeconds -= 1.0;
+            if (_getReadyRemainingSeconds <= 0) {
+              _isInGetReadyDelay = false;
+              _startNewComboIfNeeded(); // Start first callout after delay
             }
           }
 
@@ -1565,7 +1565,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     // Reset UI visibility for new combo with auto-hide timer
     _isComboVisible = true;
     // Hide delay: 1 second for short combos (≤3 moves), 2 seconds for longer combos
-    _comboHideDelaySeconds = newCombo.moveCodes.length <= 3 ? 1.0 : 2.0;
+    // Add 1.0 to account for the current tick (timer will decrement on next tick)
+    _comboHideDelaySeconds = newCombo.moveCodes.length <= 3 ? 2.0 : 3.0;
 
     // Track that we've shown at least one combo (prevents empty card at start)
     if (!_hasEverShownACombo) {
