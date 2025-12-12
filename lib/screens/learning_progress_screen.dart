@@ -512,9 +512,9 @@ class LearningProgressScreen extends StatelessWidget {
         break;
 
       case NextActionType.exam:
-        buttonLabel = 'Take Exam';
+        buttonLabel = 'Next: Exam';
         buttonIcon = Icons.assignment_turned_in;
-        subtitleText = 'Test your mastery of the move';
+        subtitleText = 'Prove your mastery';
         break;
 
       case NextActionType.learningComplete:
@@ -614,6 +614,7 @@ class LearningProgressScreen extends StatelessWidget {
     switch (nextAction.type) {
       case NextActionType.drill:
       case NextActionType.addToArsenal:
+      case NextActionType.exam:
         // Navigate to Move Detail Page for the current move
         if (nextAction.moveId != null) {
           final learningMove = LearningPath.getMoveById(nextAction.moveId!);
@@ -636,11 +637,6 @@ class LearningProgressScreen extends StatelessWidget {
       case NextActionType.progression:
         // TODO: Navigate to progression session
         _showPlaceholder(context, 'Progression', 'Progression session coming soon!');
-        break;
-
-      case NextActionType.exam:
-        // TODO: Navigate to exam screen
-        _showPlaceholder(context, 'Exam', 'Exam coming soon!');
         break;
 
       case NextActionType.learningComplete:

@@ -362,7 +362,8 @@ class _MoveListItem extends StatelessWidget {
     // Determine visual properties based on unlock state
     final isLocked = unlockState == MoveUnlockState.locked;
     final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
-                           unlockState == MoveUnlockState.readyToUnlockArsenalPending;
+                           unlockState == MoveUnlockState.readyToUnlockArsenalPending ||
+                           unlockState == MoveUnlockState.readyToUnlockExamPending;
 
     // Card opacity - less greyed for locked moves
     final cardOpacity = isLocked ? 0.75 : 1.0;
@@ -463,6 +464,7 @@ class _MoveListItem extends StatelessWidget {
 
       case MoveUnlockState.readyToUnlockDrillPending:
       case MoveUnlockState.readyToUnlockArsenalPending:
+      case MoveUnlockState.readyToUnlockExamPending:
         // Purple "Next" badge
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -524,7 +526,8 @@ class _MoveListItem extends StatelessWidget {
   Widget _buildCodeBadge(BuildContext context) {
     final isLocked = unlockState == MoveUnlockState.locked;
     final isReadyToUnlock = unlockState == MoveUnlockState.readyToUnlockDrillPending ||
-                            unlockState == MoveUnlockState.readyToUnlockArsenalPending;
+                            unlockState == MoveUnlockState.readyToUnlockArsenalPending ||
+                           unlockState == MoveUnlockState.readyToUnlockExamPending;
     final isActive = unlockState == MoveUnlockState.unlocked || isReadyToUnlock;
 
     return Container(

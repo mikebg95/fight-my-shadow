@@ -7,6 +7,7 @@ import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/repositories/move_repository.dart';
 import 'package:fight_my_shadow/main.dart';
+import 'package:fight_my_shadow/screens/academy_exam_screen.dart';
 
 /// Screen that displays detailed information about a single move.
 ///
@@ -118,9 +119,62 @@ class MoveDetailScreen extends StatelessWidget {
       ),
     );
 
-    // If arsenal session was completed, mark it as done and unlock the move
+    // If arsenal session was completed, mark it as done
     if (result != null && result.completed) {
       await controller.markAddToArsenalDone(targetLearningMove.id);
+    }
+  }
+
+  void _handleStartExam(BuildContext context) async {
+    // Find the LearningMove that corresponds to this Move
+    final allLearningMoves = LearningPath.getAllMoves();
+    LearningMove? targetLearningMove;
+
+    for (final learningMove in allLearningMoves) {
+      if (learningMove.moveCodes.contains(move.code)) {
+        targetLearningMove = learningMove;
+        break;
+      }
+    }
+
+    if (targetLearningMove == null) return;
+
+    // Get all unlocked moves from learning state
+    final controller = context.read<StoryModeController>();
+    final learningState = controller.state;
+
+    // Collect all unlocked moves
+    final unlockedMoves = <Move>[];
+    final moveRepository = InMemoryMoveRepository();
+
+    for (final learningMove in allLearningMoves) {
+      final progress = learningState.getProgressForMove(learningMove.id);
+      if (progress != null && progress.isUnlocked) {
+        // Add all moves from this learning move
+        for (final moveCode in learningMove.moveCodes) {
+          final unlockedMove = moveRepository.getMoveByCode(moveCode);
+          if (unlockedMove != null) {
+            unlockedMoves.add(unlockedMove);
+          }
+        }
+      }
+    }
+
+    // Launch Exam screen
+    final result = await Navigator.push<ExamSessionResult>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AcademyExamScreen(
+          targetMove: move,
+          unlockedMoves: unlockedMoves,
+          academyLevel: targetLearningMove.level,
+        ),
+      ),
+    );
+
+    // If exam was passed, mark it and unlock the move
+    if (result != null && result.passed) {
+      await controller.markExamPassed(targetLearningMove.id);
     }
   }
 
@@ -376,6 +430,78 @@ class MoveDetailScreen extends StatelessWidget {
                           SizedBox(height: 4),
                           Text(
                             'Practice with unlocked moves',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+      case MoveUnlockState.readyToUnlockExamPending:
+        // Show START EXAM button
+        return Container(
+          margin: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.purple.shade600,
+                Colors.purple.shade800,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.purple.shade600.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _handleStartExam(context),
+              borderRadius: BorderRadius.circular(16),
+              child: const Padding(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.assignment_turned_in,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'START EXAM',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Prove your mastery to unlock',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.white,

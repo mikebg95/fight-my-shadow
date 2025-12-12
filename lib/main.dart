@@ -119,6 +119,38 @@ class AddToArsenalSessionResult {
   const AddToArsenalSessionResult({required this.completed});
 }
 
+// Exam Session Result
+class ExamSessionResult {
+  final bool passed;
+  final int correctAnswers;
+  final int totalQuestions;
+  final double accuracy;
+  final int longestStreak;
+
+  const ExamSessionResult({
+    required this.passed,
+    required this.correctAnswers,
+    required this.totalQuestions,
+    required this.accuracy,
+    required this.longestStreak,
+  });
+}
+
+// Exam Question Model
+class ExamQuestion {
+  final String code;
+  final String correctMoveName;
+  final List<String> options; // 3 options total (1 correct + 2 distractors), shuffled
+
+  const ExamQuestion({
+    required this.code,
+    required this.correctMoveName,
+    required this.options,
+  });
+
+  int get correctAnswerIndex => options.indexOf(correctMoveName);
+}
+
 // Workout Configuration Model
 class WorkoutConfiguration {
   final int rounds;

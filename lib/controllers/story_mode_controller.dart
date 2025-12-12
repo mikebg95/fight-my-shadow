@@ -93,10 +93,18 @@ class StoryModeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Marks an exam as passed for the current move.
+  /// Marks an exam as passed for a specific learning move and unlocks it.
   ///
+  /// This is the final step in the Academy progression flow.
+  Future<void> markExamPassed(int moveId) async {
+    _state = LearningProgressService.completeExam(_state, moveId);
+    await _repository.save(_state);
+    notifyListeners();
+  }
+
+  /// Legacy method for backward compatibility.
   /// Used for the full drill/progression/exam flow (not yet implemented).
-  Future<void> markExamPassed() async {
+  Future<void> _legacyMarkExamPassed() async {
     _state = LearningProgressService.passExam(_state);
     await _repository.save(_state);
     notifyListeners();

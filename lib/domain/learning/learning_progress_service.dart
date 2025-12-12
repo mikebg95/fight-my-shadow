@@ -107,16 +107,28 @@ class LearningProgressService {
   /// Marks the Add to Arsenal session as completed for a specific move.
   ///
   /// Returns updated state with addToArsenalDone set to true.
-  /// If this is the last required step, also marks the move as unlocked.
+  /// The move is NOT unlocked yet - user must pass the exam.
   static LearningState completeAddToArsenal(LearningState state, int moveId) {
     final progress = state.getProgressForMove(moveId);
     if (progress == null) return state;
 
-    // For now, completing Add to Arsenal unlocks the move
-    // Later we can add progression sessions and exams as additional requirements
     final updatedProgress = progress.copyWith(
       addToArsenalDone: true,
-      isUnlocked: true, // Auto-unlock after Add to Arsenal
+    );
+    return state.updateMoveProgress(moveId, updatedProgress);
+  }
+
+  /// Marks the exam as passed for a specific move and unlocks it.
+  ///
+  /// Returns updated state with examPassed and isUnlocked set to true.
+  /// This is the final step to unlock a move in Academy.
+  static LearningState completeExam(LearningState state, int moveId) {
+    final progress = state.getProgressForMove(moveId);
+    if (progress == null) return state;
+
+    final updatedProgress = progress.copyWith(
+      examPassed: true,
+      isUnlocked: true,
     );
     return state.updateMoveProgress(moveId, updatedProgress);
   }
