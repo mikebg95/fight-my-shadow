@@ -8,6 +8,7 @@ import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/data/boxing_moves_data.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
+import 'package:fight_my_shadow/domain/learning/learning_state.dart';
 
 /// Library screen that displays all available moves grouped by category.
 ///
@@ -188,7 +189,7 @@ class MovesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAcademyProgressHeader(BuildContext context, learningState) {
+  Widget _buildAcademyProgressHeader(BuildContext context, LearningState learningState) {
     // Calculate unlocked moves count
     final totalAcademyMoves = LearningPath.totalMoves;
     final unlockedCount = learningState.moveProgress
