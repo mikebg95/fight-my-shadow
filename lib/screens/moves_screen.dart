@@ -9,6 +9,7 @@ import 'package:fight_my_shadow/controllers/story_mode_controller.dart';
 import 'package:fight_my_shadow/data/boxing_moves_data.dart';
 import 'package:fight_my_shadow/domain/learning/learning_path.dart';
 import 'package:fight_my_shadow/domain/learning/learning_state.dart';
+import 'package:fight_my_shadow/widgets/collapsible_section.dart';
 
 /// Library screen that displays all available moves grouped by category.
 ///
@@ -55,55 +56,77 @@ class MovesScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                 children: [
                   // Punches section
-                  _buildSectionHeader(context, 'Punches', punches.length),
-                  ...punches.map((move) => _MoveListItem(
-                        move: move,
-                        unlockState: MoveLockStatusResolver.getUnlockState(
-                          move.code,
-                          learningState,
-                          currentMove,
-                        ),
-                        onTap: () => _navigateToDetail(context, move),
-                      )),
-                  const SizedBox(height: 16),
+                  CollapsibleSection(
+                    title: 'Punches',
+                    subtitle: '${punches.length} moves',
+                    leadingIcon: Icons.sports_martial_arts,
+                    accentColor: const Color(0xFFFF5722), // Orange for Library
+                    initiallyExpanded: false,
+                    children: punches.map((move) => _MoveListItem(
+                          move: move,
+                          unlockState: MoveLockStatusResolver.getUnlockState(
+                            move.code,
+                            learningState,
+                            currentMove,
+                          ),
+                          onTap: () => _navigateToDetail(context, move),
+                        )).toList(),
+                  ),
 
                   // Defense section
-                  _buildSectionHeader(context, 'Defense', defense.length),
-                  ...defense.map((move) => _MoveListItem(
-                        move: move,
-                        unlockState: MoveLockStatusResolver.getUnlockState(
-                          move.code,
-                          learningState,
-                          currentMove,
-                        ),
-                        onTap: () => _navigateToDetail(context, move),
-                      )),
-                  const SizedBox(height: 16),
+                  CollapsibleSection(
+                    title: 'Defense',
+                    subtitle: '${defense.length} moves',
+                    leadingIcon: Icons.shield,
+                    accentColor: const Color(0xFFFF5722), // Orange for Library
+                    initiallyExpanded: false,
+                    children: defense.map((move) => _MoveListItem(
+                          move: move,
+                          unlockState: MoveLockStatusResolver.getUnlockState(
+                            move.code,
+                            learningState,
+                            currentMove,
+                          ),
+                          onTap: () => _navigateToDetail(context, move),
+                        )).toList(),
+                  ),
 
                   // Footwork section
-                  _buildSectionHeader(context, 'Footwork', footwork.length),
-                  ...footwork.map((move) => _MoveListItem(
-                        move: move,
-                        unlockState: MoveLockStatusResolver.getUnlockState(
-                          move.code,
-                          learningState,
-                          currentMove,
-                        ),
-                        onTap: () => _navigateToDetail(context, move),
-                      )),
-                  const SizedBox(height: 16),
+                  CollapsibleSection(
+                    title: 'Footwork',
+                    subtitle: '${footwork.length} moves',
+                    leadingIcon: Icons.directions_walk,
+                    accentColor: const Color(0xFFFF5722), // Orange for Library
+                    initiallyExpanded: false,
+                    children: footwork.map((move) => _MoveListItem(
+                          move: move,
+                          unlockState: MoveLockStatusResolver.getUnlockState(
+                            move.code,
+                            learningState,
+                            currentMove,
+                          ),
+                          onTap: () => _navigateToDetail(context, move),
+                        )).toList(),
+                  ),
 
                   // Deception section
-                  _buildSectionHeader(context, 'Deception', deception.length),
-                  ...deception.map((move) => _MoveListItem(
-                        move: move,
-                        unlockState: MoveLockStatusResolver.getUnlockState(
-                          move.code,
-                          learningState,
-                          currentMove,
-                        ),
-                        onTap: () => _navigateToDetail(context, move),
-                      )),
+                  if (deception.isNotEmpty)
+                    CollapsibleSection(
+                      title: 'Deception',
+                      subtitle: '${deception.length} moves',
+                      leadingIcon: Icons.psychology,
+                      accentColor: const Color(0xFFFF5722), // Orange for Library
+                      initiallyExpanded: false,
+                      children: deception.map((move) => _MoveListItem(
+                            move: move,
+                            unlockState: MoveLockStatusResolver.getUnlockState(
+                              move.code,
+                              learningState,
+                              currentMove,
+                            ),
+                            onTap: () => _navigateToDetail(context, move),
+                          )).toList(),
+                    ),
                 ],
               ),
             ),

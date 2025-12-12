@@ -11,6 +11,7 @@ import 'package:fight_my_shadow/services/move_lock_status_resolver.dart';
 import 'package:fight_my_shadow/screens/move_detail_screen.dart';
 import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/models/move.dart';
+import 'package:fight_my_shadow/widgets/collapsible_section.dart';
 
 // Academy color theme (purple instead of orange)
 const _academyPrimary = Color(0xFF9C27B0);  // Purple 500
@@ -244,54 +245,26 @@ class LearningProgressScreen extends StatelessWidget {
     // Get level name from first move
     final levelName = learningMoves.first.levelName;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Level header
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _academyPrimary,
-                      _academySecondary,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'LEVEL $level',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                levelName,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-              ),
-            ],
-          ),
-        ),
+    // Calculate progress within this level
+    final unlockedInLevel = learningMoves.where((lm) {
+      final progress = learningState.getProgressForMove(lm.id);
+      return progress != null && progress.isUnlocked;
+    }).length;
 
-        // Moves in this level
-        ...learningMoves.map((learningMove) =>
-          _buildMoveRow(context, learningMove, repository, learningState)),
-        const SizedBox(height: 16),
-      ],
+    // Determine if this level should be initially expanded
+    // Only expand the level that contains the current move
+    final currentMove = learningState.currentMove;
+    final containsCurrentMove = learningMoves.any((lm) {
+      return lm.moveCodes.contains(currentMove);
+    });
+
+    return CollapsibleSection(
+      title: 'LEVEL $level — $levelName',
+      subtitle: '$unlockedInLevel/${learningMoves.length} unlocked',
+      accentColor: _academyPrimary,
+      initiallyExpanded: containsCurrentMove,
+      children: learningMoves.map((learningMove) =>
+        _buildMoveRow(context, learningMove, repository, learningState)).toList(),
     );
   }
 
