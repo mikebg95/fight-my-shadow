@@ -1054,6 +1054,17 @@ enum ComboPhase {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
+  // ========== Training Mode Timing Constants ==========
+  // Execution timing (seconds per move) for normal Training Sessions
+  static const double _trainingExecutionBeginner = 2.0;
+  static const double _trainingExecutionIntermediate = 1.5;
+  static const double _trainingExecutionAdvanced = 1.2;
+
+  // Recovery timing (seconds) for normal Training Sessions
+  static const double _trainingRecoveryLow = 4.0;
+  static const double _trainingRecoveryMedium = 2.5;
+  static const double _trainingRecoveryHigh = 1.5;
+
   late int currentRound;
   late WorkoutPhase currentPhase;
   late int remainingSeconds;
@@ -1426,17 +1437,20 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return combo.moveCodes.length * 0.4; // 0.4-1.2s
     }
 
-    // Training mode: time per move varies with difficulty
+    // Training mode: shifted timing - Intermediate uses old Beginner, Advanced uses old Intermediate
     double secondsPerMove;
     switch (widget.config.difficulty) {
       case Difficulty.beginner:
-        secondsPerMove = 2.0; // Slower, more time per move
+        // Beginner unchanged
+        secondsPerMove = _trainingExecutionBeginner; // 2.0
         break;
       case Difficulty.intermediate:
-        secondsPerMove = 1.5;
+        // Intermediate now uses old Beginner timing
+        secondsPerMove = _trainingExecutionBeginner; // 2.0
         break;
       case Difficulty.advanced:
-        secondsPerMove = 1.2; // Faster execution
+        // Advanced now uses old Intermediate timing
+        secondsPerMove = _trainingExecutionIntermediate; // 1.5
         break;
     }
 
@@ -1477,15 +1491,59 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return recovery;
     }
 
-    // Training mode: recovery based on intensity
-    switch (widget.config.intensity) {
-      case Intensity.low:
-        return 4.0; // Longer recovery for low intensity
-      case Intensity.medium:
-        return 2.5;
-      case Intensity.high:
-        return 1.5; // Short recovery for high intensity
+    // Training mode: shifted timing based on difficulty + intensity
+    // Intermediate uses old Beginner recovery, Advanced uses old Intermediate but faster
+    double recoverySeconds;
+
+    switch (widget.config.difficulty) {
+      case Difficulty.beginner:
+        // Beginner unchanged
+        switch (widget.config.intensity) {
+          case Intensity.low:
+            recoverySeconds = _trainingRecoveryLow; // 4.0
+            break;
+          case Intensity.medium:
+            recoverySeconds = _trainingRecoveryMedium; // 2.5
+            break;
+          case Intensity.high:
+            recoverySeconds = _trainingRecoveryHigh; // 1.5
+            break;
+        }
+        break;
+
+      case Difficulty.intermediate:
+        // Intermediate now uses old Beginner recovery timing
+        switch (widget.config.intensity) {
+          case Intensity.low:
+            recoverySeconds = _trainingRecoveryLow; // 4.0
+            break;
+          case Intensity.medium:
+            recoverySeconds = _trainingRecoveryMedium; // 2.5
+            break;
+          case Intensity.high:
+            recoverySeconds = _trainingRecoveryHigh; // 1.5
+            break;
+        }
+        break;
+
+      case Difficulty.advanced:
+        // Advanced uses old Intermediate timing, then reduces by 0.75s for faster pace
+        switch (widget.config.intensity) {
+          case Intensity.low:
+            recoverySeconds = _trainingRecoveryLow - 0.75; // 3.25
+            break;
+          case Intensity.medium:
+            recoverySeconds = _trainingRecoveryMedium - 0.75; // 1.75
+            break;
+          case Intensity.high:
+            recoverySeconds = _trainingRecoveryHigh - 0.75; // 0.75
+            break;
+        }
+        break;
     }
+
+    // Ensure recovery never goes below 0.5 seconds
+    return recoverySeconds.clamp(0.5, double.infinity);
   }
 
   /// Checks if there is enough time remaining in the round to start a new combo.
