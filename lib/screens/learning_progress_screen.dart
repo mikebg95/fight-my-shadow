@@ -481,6 +481,17 @@ class LearningProgressScreen extends StatelessWidget {
         subtitleText = 'Open move details';
         break;
 
+      case NextActionType.addToArsenal:
+        final move = nextAction.moveId != null
+            ? LearningPath.getMoveById(nextAction.moveId!)
+            : null;
+        buttonLabel = move != null
+            ? 'Next: Add to arsenal'
+            : 'Next: Add to arsenal';
+        buttonIcon = Icons.add_circle;
+        subtitleText = 'Practice this move';
+        break;
+
       case NextActionType.progression:
         final move = nextAction.moveId != null
             ? LearningPath.getMoveById(nextAction.moveId!)
@@ -602,6 +613,7 @@ class LearningProgressScreen extends StatelessWidget {
   void _handleCTAPressed(BuildContext context, NextAction nextAction) {
     switch (nextAction.type) {
       case NextActionType.drill:
+      case NextActionType.addToArsenal:
         // Navigate to Move Detail Page for the current move
         if (nextAction.moveId != null) {
           final learningMove = LearningPath.getMoveById(nextAction.moveId!);

@@ -91,7 +91,6 @@ class MoveDetailScreen extends StatelessWidget {
 
     // Collect all unlocked move codes
     final unlockedMoveCodes = <String>[];
-    final moveRepository = InMemoryMoveRepository();
 
     for (final learningMove in allLearningMoves) {
       final progress = learningState.getProgressForMove(learningMove.id);

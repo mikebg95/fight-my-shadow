@@ -72,6 +72,10 @@ class LearningProgressService {
       return NextAction.drill(currentMove.id);
     }
 
+    if (!progress.addToArsenalDone) {
+      return NextAction.addToArsenal(currentMove.id);
+    }
+
     final requiredSessions = getRequiredProgressionSessions(currentMove.level);
     if (progress.progressionSessionsDone < requiredSessions) {
       return NextAction.progression(currentMove.id);

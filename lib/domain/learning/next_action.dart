@@ -2,11 +2,13 @@
 ///
 /// The progression flow is:
 /// 1. Drill - Learn the move with guided practice
-/// 2. Progression - Practice the move multiple times (1-3 sessions based on level)
-/// 3. Exam - Test mastery of the move
-/// 4. LearningComplete - All 38 moves have been unlocked
+/// 2. Add to Arsenal - Integrate the move with unlocked moves through weighted practice
+/// 3. Progression - Practice the move multiple times (1-3 sessions based on level)
+/// 4. Exam - Test mastery of the move
+/// 5. LearningComplete - All 18 moves have been unlocked
 enum NextActionType {
   drill,
+  addToArsenal,
   progression,
   exam,
   learningComplete,
@@ -25,6 +27,11 @@ class NextAction {
   /// Factory for drill action.
   factory NextAction.drill(int moveId) {
     return NextAction(type: NextActionType.drill, moveId: moveId);
+  }
+
+  /// Factory for add to arsenal action.
+  factory NextAction.addToArsenal(int moveId) {
+    return NextAction(type: NextActionType.addToArsenal, moveId: moveId);
   }
 
   /// Factory for progression action.
