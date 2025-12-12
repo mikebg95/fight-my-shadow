@@ -383,6 +383,11 @@ class _AcademyExamScreenState extends State<AcademyExamScreen> {
                 );
               }),
 
+              const SizedBox(height: 12),
+
+              // TEMPORARY - FOR TESTING ONLY: Skip button
+              _buildSkipButton(),
+
               const SizedBox(height: 20),
             ],
           ),
@@ -614,6 +619,50 @@ class _AcademyExamScreenState extends State<AcademyExamScreen> {
                 ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSkipButton() {
+    const academyPurple = Color(0xFF9C27B0);
+
+    return Center(
+      child: TextButton(
+        onPressed: _skipSession,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          backgroundColor: academyPurple.withValues(alpha: 0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: academyPurple.withValues(alpha: 0.3)),
+          ),
+        ),
+        child: Text(
+          'Skip (testing)',
+          style: TextStyle(
+            color: Colors.purple.shade300,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _skipSession() {
+    // Stop both timers immediately
+    _examTimer?.cancel();
+    _questionTimer?.cancel();
+
+    // Return passed result to trigger unlock, celebration, and Academy redirect
+    Navigator.pop(
+      context,
+      ExamSessionResult(
+        passed: true,
+        correctAnswers: 0,
+        totalQuestions: 0,
+        accuracy: 1.0,
+        longestStreak: 8,
       ),
     );
   }

@@ -1708,6 +1708,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
               // Controls
               _buildControls(),
+
+              // TEMPORARY - FOR TESTING ONLY: Skip button for Academy modes
+              if (widget.config.mode == SessionMode.drill ||
+                  widget.config.mode == SessionMode.addToArsenal) ...[
+                const SizedBox(height: 12),
+                _buildSkipButton(),
+              ],
+
               const SizedBox(height: 20),
             ],
           ),
@@ -2102,6 +2110,51 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ),
       ),
     );
+  }
+
+  // TEMPORARY - FOR TESTING ONLY
+  /// Skip button for Academy modes (Drill/Add-to-Arsenal).
+  /// Marks the session as completed and advances Story Mode state correctly.
+  Widget _buildSkipButton() {
+    return Center(
+      child: TextButton(
+        onPressed: _skipSession,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          backgroundColor: Colors.purple.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: Colors.purple.withOpacity(0.3)),
+          ),
+        ),
+        child: Text(
+          'Skip (testing)',
+          style: TextStyle(
+            color: Colors.purple.shade300,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // TEMPORARY - FOR TESTING ONLY
+  /// Immediately completes the current Academy session (Drill/Add-to-Arsenal).
+  /// Stops timers, clears state, and returns completed result to trigger proper progression.
+  void _skipSession() {
+    // Stop the timer and voice immediately
+    _timer?.cancel();
+    _voiceController.stop();
+    _clearCombo();
+    _previousCombo = null;
+
+    // Mark as completed and return the appropriate result
+    if (widget.config.mode == SessionMode.drill) {
+      Navigator.pop(context, DrillSessionResult(completed: true));
+    } else if (widget.config.mode == SessionMode.addToArsenal) {
+      Navigator.pop(context, AddToArsenalSessionResult(completed: true));
+    }
   }
 
   Widget _buildCompleteScreen() {
