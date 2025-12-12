@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 
 /// Celebration screen shown when a move is unlocked.
 ///
@@ -85,12 +86,14 @@ class _MoveUnlockedCelebrationScreenState
   }
 
   void _navigateBack() {
-    // Pop back to Academy screen (LearningProgressScreen)
-    // Pop until we find the Academy route or hit the discipline selection screen
-    Navigator.of(context).popUntil((route) {
-      // Check if this is the academy route or if we're at the root
-      return route.isFirst || route.settings.name == '/academy';
-    });
+    // Navigate directly to Academy screen (LearningProgressScreen)
+    // Use pushAndRemoveUntil to guarantee we land on Academy, not Home
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const LearningProgressScreen(),
+      ),
+      (route) => false, // Remove all previous routes
+    );
   }
 
   @override
