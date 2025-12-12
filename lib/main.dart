@@ -1156,13 +1156,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             }
           }
 
-          // Handle combo hide delay (after TTS finishes)
-          // This ONLY hides the UI, does NOT clear the engine state
-          if (!_isComboVisible && _comboHideDelaySeconds > 0) {
+          // Handle combo auto-hide timer
+          // This ONLY hides the UI, does NOT affect combo engine state
+          if (_isComboVisible && _comboHideDelaySeconds > 0) {
             _comboHideDelaySeconds -= 1.0;
             if (_comboHideDelaySeconds <= 0) {
-              // Combo text stays hidden - no action needed
-              // The combo engine continues running
+              // Hide the combo text from display
+              _isComboVisible = false;
             }
           }
 
@@ -1562,9 +1562,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _comboPhase = ComboPhase.announce;
     _comboPhaseRemainingSeconds = _calculateAnnounceDuration(newCombo);
 
-    // Reset UI visibility for new combo
+    // Reset UI visibility for new combo with auto-hide timer
     _isComboVisible = true;
-    _comboHideDelaySeconds = 0.0;
+    // Hide delay: 1 second for short combos (≤3 moves), 2 seconds for longer combos
+    _comboHideDelaySeconds = newCombo.moveCodes.length <= 3 ? 1.0 : 2.0;
 
     // Track that we've shown at least one combo (prevents empty card at start)
     if (!_hasEverShownACombo) {
@@ -1888,10 +1889,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   /// Shows combo codes directly as large white text (no card).
   /// Returns SizedBox.shrink() when nothing should be shown.
   ///
-  /// AUTHORITATIVE RENDERING RULE:
-  /// Render combo text IF AND ONLY IF:
+  /// Builds the combo display for Academy modes (drill/add-to-arsenal).
+  ///
+  /// Shows large centered text with combo codes that auto-hides after 1-2 seconds.
+  /// Rendering rules:
   /// - _currentCombo != null
   /// - _comboPhase != ComboPhase.idle
+  /// - _isComboVisible == true (controlled by auto-hide timer)
   Widget _buildAcademyComboDisplay() {
     // During rest phase
     if (currentPhase == WorkoutPhase.rest) {
@@ -1903,9 +1907,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return const SizedBox.shrink(); // Show nothing during countdown
     }
 
-    // AUTHORITATIVE: Show combo if we have content and phase is active
-    // No extra visibility flags, no first-combo exceptions
-    if (_currentCombo != null && _comboPhase != ComboPhase.idle) {
+    // Show combo only if:
+    // - We have a combo
+    // - Phase is active (not idle)
+    // - UI visibility flag is true (respects auto-hide timer)
+    if (_currentCombo != null && _comboPhase != ComboPhase.idle && _isComboVisible) {
       final codes = _currentCombo!.moveCodes;
       final codesText = codes.join(' – ');
 
