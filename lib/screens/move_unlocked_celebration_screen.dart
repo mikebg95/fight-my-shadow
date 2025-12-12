@@ -86,10 +86,9 @@ class _MoveUnlockedCelebrationScreenState
 
   void _navigateBack() {
     // Pop back to Academy screen (LearningProgressScreen)
-    // We need to pop until we find it or until we're back at the root
+    // Pop until we find the Academy route or hit the discipline selection screen
     Navigator.of(context).popUntil((route) {
-      // Check if this is the learning progress screen
-      // Since we don't have named routes yet, we check the route's settings
+      // Check if this is the academy route or if we're at the root
       return route.isFirst || route.settings.name == '/academy';
     });
   }

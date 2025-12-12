@@ -1223,6 +1223,39 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       widget.config.mode == SessionMode.drill ||
       widget.config.mode == SessionMode.addToArsenal;
 
+  /// Returns true if this is an Academy session (Drill or Add-to-Arsenal).
+  bool get _isAcademySession =>
+      widget.config.mode == SessionMode.drill ||
+      widget.config.mode == SessionMode.addToArsenal;
+
+  /// Returns the primary color for the current session mode.
+  /// Academy sessions use purple, training sessions use orange.
+  Color get _primaryColor => _isAcademySession
+      ? const Color(0xFF9C27B0) // Purple for Academy
+      : const Color(0xFFFF5722); // Orange for Training
+
+  /// Returns the secondary color for the current session mode.
+  /// Academy sessions use lighter purple, training sessions use lighter orange.
+  Color get _secondaryColor => _isAcademySession
+      ? const Color(0xFFBA68C8) // Light purple for Academy
+      : const Color(0xFFFF6E40); // Light orange for Training
+
+  /// Returns the session title based on mode and target move.
+  String get _sessionTitle {
+    if (widget.config.mode == SessionMode.drill && widget.config.drillMoveCode != null) {
+      // Drill mode: "Drill: <MoveName>"
+      final move = _moveRepository.getMoveByCode(widget.config.drillMoveCode!);
+      return 'DRILL: ${move?.name.toUpperCase() ?? widget.config.drillMoveCode}';
+    } else if (widget.config.mode == SessionMode.addToArsenal && widget.config.arsenalTargetMoveCode != null) {
+      // Add-to-Arsenal mode: "Add to Arsenal: <MoveName>"
+      final move = _moveRepository.getMoveByCode(widget.config.arsenalTargetMoveCode!);
+      return 'ADD TO ARSENAL: ${move?.name.toUpperCase() ?? widget.config.arsenalTargetMoveCode}';
+    } else {
+      // Training mode: standard title
+      return 'WORKOUT IN PROGRESS';
+    }
+  }
+
   /// Determines whether the combo card should be shown.
   ///
   /// In Academy modes (Drill/Arsenal), only show card when:
@@ -1366,8 +1399,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return false;
     }
 
-    // Need at least a minimum cycle time (estimate for a short combo)
-    const minCycleTime = 5.0; // Conservative minimum
+    // Need at least a minimum buffer before round ends
+    // Reduced from 5.0s to 1.0s to keep combos flowing until the very end
+    const minCycleTime = 1.0;
     return remainingSeconds >= minCycleTime;
   }
 
@@ -1597,8 +1631,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.secondary,
+                    _primaryColor,
+                    _secondaryColor,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -1611,7 +1645,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              widget.config.isDrillMode ? 'DRILL SESSION' : 'WORKOUT IN PROGRESS',
+              _sessionTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.w700,
@@ -1631,8 +1665,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         gradient: LinearGradient(
           colors: isRound
               ? [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
+                  _primaryColor,
+                  _secondaryColor,
                 ]
               : [
                   Colors.blue.shade600,
@@ -1643,7 +1677,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         boxShadow: [
           BoxShadow(
             color: (isRound
-                    ? Theme.of(context).colorScheme.primary
+                    ? _primaryColor
                     : Colors.blue.shade600)
                 .withOpacity(0.4),
             blurRadius: 20,
@@ -1688,7 +1722,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         style: TextStyle(
           fontSize: 80,
           fontWeight: FontWeight.w900,
-          color: Theme.of(context).colorScheme.primary,
+          color: _primaryColor,
           letterSpacing: 4,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
@@ -1710,7 +1744,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: _primaryColor,
                   ),
             ),
             const SizedBox(height: 12),
@@ -1927,8 +1961,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         gradient: isPrimary
             ? LinearGradient(
                 colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
+                  _primaryColor,
+                  _secondaryColor,
                 ],
               )
             : null,
@@ -1981,14 +2015,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.secondary,
+                      _primaryColor,
+                      _secondaryColor,
                     ],
                   ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
+                      color: _primaryColor.withOpacity(0.4),
                       blurRadius: 30,
                       spreadRadius: 10,
                     ),
