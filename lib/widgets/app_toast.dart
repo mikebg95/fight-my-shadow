@@ -171,10 +171,18 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
       top: MediaQuery.of(context).padding.top + 20,
       left: 20,
       right: 20,
-      child: FadeTransition(
-        opacity: _opacityAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedBuilder(
+          animation: _opacityAnimation,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _opacityAnimation.value,
+              child: RepaintBoundary(
+                child: child!,
+              ),
+            );
+          },
           child: GestureDetector(
             onTap: () {
               // Dismiss on tap
