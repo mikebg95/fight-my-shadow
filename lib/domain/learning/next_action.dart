@@ -5,7 +5,7 @@
 /// 2. Add to Arsenal - Integrate the move with unlocked moves through weighted practice
 /// 3. Progression - Practice the move multiple times (1-3 sessions based on level)
 /// 4. Exam - Test mastery of the move
-/// 5. LearningComplete - All 18 moves have been unlocked
+/// 5. LearningComplete - All moves in the curriculum have been unlocked
 enum NextActionType {
   drill,
   addToArsenal,

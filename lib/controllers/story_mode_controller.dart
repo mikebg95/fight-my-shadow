@@ -10,12 +10,20 @@ import 'package:fight_my_shadow/repositories/learning_progress_repository.dart';
 /// - In-memory state that all screens read from
 /// - Persistence to local storage (survives app restarts)
 /// - State updates with automatic save and notification
+/// - Migration when the curriculum changes (moves added/removed)
 ///
 /// Usage:
 /// - Create once at app startup
 /// - Call init() to load persisted state
 /// - Inject into screens via InheritedWidget, Provider, or similar
 /// - Screens listen to changes via ChangeNotifier
+///
+/// Migration behavior:
+/// When the app's curriculum changes (new moves added, moves removed or
+/// reordered), [init] automatically migrates persisted state to match the
+/// current curriculum. User progress is preserved for moves that still exist;
+/// new moves start with fresh progress. This prevents crash-on-launch when
+/// users update the app to a version with a different curriculum.
 class StoryModeController extends ChangeNotifier {
   final LearningProgressRepository _repository;
 
@@ -34,14 +42,52 @@ class StoryModeController extends ChangeNotifier {
   /// Initializes the controller by loading persisted state.
   ///
   /// Call this once at app startup before using the controller.
-  /// If persisted state exists, it will be loaded. Otherwise,
-  /// a fresh initial state will be used.
+  /// If persisted state exists, it will be loaded and migrated if necessary.
+  /// Otherwise, a fresh initial state will be created.
+  ///
+  /// This method is designed to be crash-safe:
+  /// - Catches all exceptions during load/parse
+  /// - Falls back to fresh state if anything goes wrong
+  /// - Migrates outdated state to match current curriculum
+  /// - Always leaves the app in a valid, launchable state
   Future<void> init() async {
-    final loadedState = await _repository.load();
+    try {
+      final loadedState = await _repository.load();
 
-    if (loadedState != null) {
-      _state = loadedState;
-    } else {
+      if (loadedState != null) {
+        // Validate and migrate to current curriculum if needed
+        final (migratedState, wasMigrated) =
+            LearningState.migrateToCurrentCurriculum(loadedState);
+
+        _state = migratedState;
+
+        // Save migrated state to persist the fix
+        if (wasMigrated) {
+          if (kDebugMode) {
+            print('[StoryModeController] MIGRATION: old=${loadedState.moveProgress.length} '
+                'new=${migratedState.moveProgress.length}, saving migrated state');
+          }
+          await _repository.save(_state);
+        }
+      } else {
+        // No saved state - initialize fresh
+        _state = LearningProgressService.initializeFreshState();
+      }
+    } catch (e, stackTrace) {
+      // Catch-all for any unexpected errors during init
+      // This ensures the app NEVER crashes on launch due to persisted data
+      if (kDebugMode) {
+        print('[StoryModeController] Error during init, resetting to fresh state: $e');
+        print(stackTrace);
+      }
+
+      // Clear corrupted storage and start fresh
+      try {
+        await _repository.clear();
+      } catch (_) {
+        // Ignore errors from clear - we're already in error recovery
+      }
+
       _state = LearningProgressService.initializeFreshState();
     }
 

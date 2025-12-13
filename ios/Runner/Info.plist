@@ -47,5 +47,12 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>Used for local development connections and debugging on your network.</string>
+		<key>NSBonjourServices</key>
+		<array>
+			<string>_dartVmService._tcp</string>
+			<string>_dartobservatory._tcp</string>
+		</array>
 	</dict>
 </plist>

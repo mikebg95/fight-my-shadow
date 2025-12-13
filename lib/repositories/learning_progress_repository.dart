@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fight_my_shadow/domain/learning/learning_state.dart';
 
@@ -27,7 +28,9 @@ class LearningProgressRepository {
     } catch (e) {
       // If JSON is corrupted or parsing fails, return null
       // The controller will initialize with fresh state
-      print('Error loading learning state: $e');
+      if (kDebugMode) {
+        print('[LearningProgressRepository] Error loading state: $e');
+      }
       return null;
     }
   }

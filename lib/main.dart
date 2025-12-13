@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
@@ -21,29 +22,45 @@ import 'package:fight_my_shadow/widgets/app_toast.dart';
 import 'package:fight_my_shadow/utils/responsive.dart';
 
 void main() async {
-  // Initialize Flutter bindings
-  WidgetsFlutterBinding.ensureInitialized();
+  // BOOT LOGGING - helps diagnose crash-on-relaunch on real device
+  print('🚀 BOOT 1: main() entered - ${kReleaseMode ? "RELEASE" : kProfileMode ? "PROFILE" : "DEBUG"} mode');
 
-  // Initialize repositories
-  final learningRepository = LearningProgressRepository();
-  final trainingRepository = TrainingPreferencesRepository();
-  final moveRepository = InMemoryMoveRepository();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    print('🚀 BOOT 2: WidgetsFlutterBinding initialized');
 
-  // Initialize Academy controller with persistence
-  final storyModeController = StoryModeController(learningRepository);
-  await storyModeController.init();
+    // Initialize repositories
+    final learningRepository = LearningProgressRepository();
+    final trainingRepository = TrainingPreferencesRepository();
+    final moveRepository = InMemoryMoveRepository();
+    print('🚀 BOOT 3: Repositories created');
 
-  // Initialize Training Preferences controller with persistence
-  final trainingPreferencesController = TrainingPreferencesController(
-    trainingRepository,
-    moveRepository,
-  );
-  await trainingPreferencesController.init(storyModeController.state);
+    // Initialize Academy controller with persistence
+    final storyModeController = StoryModeController(learningRepository);
+    print('🚀 BOOT 4: StoryModeController created, calling init()...');
+    await storyModeController.init();
+    print('🚀 BOOT 5: StoryModeController.init() complete, moves=${storyModeController.state.moveProgress.length}');
 
-  runApp(FightMyShadowApp(
-    storyModeController: storyModeController,
-    trainingPreferencesController: trainingPreferencesController,
-  ));
+    // Initialize Training Preferences controller with persistence
+    final trainingPreferencesController = TrainingPreferencesController(
+      trainingRepository,
+      moveRepository,
+    );
+    print('🚀 BOOT 6: TrainingPreferencesController created, calling init()...');
+    await trainingPreferencesController.init(storyModeController.state);
+    print('🚀 BOOT 7: TrainingPreferencesController.init() complete');
+
+    print('🚀 BOOT 8: Calling runApp()...');
+    runApp(FightMyShadowApp(
+      storyModeController: storyModeController,
+      trainingPreferencesController: trainingPreferencesController,
+    ));
+    print('🚀 BOOT 9: runApp() returned');
+  } catch (e, stack) {
+    print('💥 BOOT CRASH: $e');
+    print('💥 STACK: $stack');
+    rethrow;
+  }
 }
 
 class FightMyShadowApp extends StatelessWidget {
