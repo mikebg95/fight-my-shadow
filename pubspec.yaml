@@ -48,6 +48,9 @@ dependencies:
   # State management for global controllers
   provider: ^6.1.1
 
+  # Keep screen awake during workout sessions
+  wakelock_plus: ^1.2.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

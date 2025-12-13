@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:fight_my_shadow/screens/library_screen.dart';
 import 'package:fight_my_shadow/screens/discipline_selection_screen.dart';
 import 'package:fight_my_shadow/models/training_discipline.dart';
@@ -1257,6 +1258,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Keep screen awake during workout session
+    try {
+      WakelockPlus.enable();
+      if (kDebugMode) {
+        print('[WorkoutScreen] Wakelock enabled');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('[WorkoutScreen] Failed to enable wakelock: $e');
+      }
+    }
+
     currentRound = 1;
     currentPhase = WorkoutPhase.round;
     remainingSeconds = widget.config.roundDurationSeconds;
@@ -1292,6 +1306,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _timer?.cancel();
     _voiceController.dispose();
     _soundService.dispose();
+
+    // Restore default screen sleep behavior
+    try {
+      WakelockPlus.disable();
+      if (kDebugMode) {
+        print('[WorkoutScreen] Wakelock disabled');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('[WorkoutScreen] Failed to disable wakelock: $e');
+      }
+    }
+
     super.dispose();
   }
 
@@ -1407,6 +1434,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _voiceController.stop();
     _clearCombo();
     _previousCombo = null;
+
+    // Safety: disable wakelock before navigation (belt-and-suspenders with dispose)
+    try {
+      WakelockPlus.disable();
+    } catch (_) {}
 
     // Return appropriate result based on session mode
     if (widget.config.mode == SessionMode.drill) {
