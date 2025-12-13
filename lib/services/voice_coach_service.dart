@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 /// Service that manages text-to-speech for voice coaching during workouts.
@@ -56,6 +57,10 @@ class VoiceCoachService {
     // Convert codes to spoken words
     final spokenPhrase = _buildSpokenPhrase(codes);
 
+    if (kDebugMode) {
+      print('[VoiceCoachService] TTS codes=$codes -> "$spokenPhrase"');
+    }
+
     // Speak the phrase
     try {
       await _tts.speak(spokenPhrase);
@@ -95,11 +100,14 @@ class VoiceCoachService {
   ///
   /// Mapping:
   /// - Numbers: "1" → "one", "2" → "two", etc.
-  /// - Letters: "A" → "ay", "B" → "bee", etc. (explicit phonetic mapping)
+  /// - Single letters: "A" → "A.", "B" → "B.", etc. (trailing period for iOS TTS)
   ///
-  /// This ensures we speak codes only, never move names.
-  /// Letters are explicitly mapped to prevent TTS from saying "capital <letter>".
+  /// The trailing period trick makes iOS TTS speak single letters correctly
+  /// as their letter names (e.g., "A." → "ay", "B." → "bee").
+  /// Without the period, iOS TTS may mispronounce letters or say "capital A".
   String _codeToSpokenWord(String code) {
+    final codeTrimmed = code.trim();
+
     // Map numeric codes to spoken numbers
     const numberMap = {
       '1': 'one',
@@ -118,49 +126,18 @@ class VoiceCoachService {
       '14': 'fourteen',
     };
 
-    // Map letter codes to phonetic pronunciations
-    // This prevents TTS from saying "capital P" etc.
-    // Note: "A" uses "aye" (not "ay") because iOS TTS mispronounces "ay" as "I"
-    const letterMap = {
-      'A': 'aye',
-      'B': 'bee',
-      'C': 'see',
-      'D': 'dee',
-      'E': 'ee',
-      'F': 'eff',
-      'G': 'gee',
-      'H': 'aitch',
-      'I': 'eye',
-      'J': 'jay',
-      'K': 'kay',
-      'L': 'ell',
-      'M': 'em',
-      'N': 'en',
-      'O': 'oh',
-      'P': 'pee',
-      'Q': 'cue',
-      'R': 'are',
-      'S': 'ess',
-      'T': 'tee',
-      'U': 'you',
-      'V': 'vee',
-      'W': 'double you',
-      'X': 'ex',
-      'Y': 'why',
-      'Z': 'zee',
-    };
-
     // Check if it's a number
-    if (numberMap.containsKey(code)) {
-      return numberMap[code]!;
+    if (numberMap.containsKey(codeTrimmed)) {
+      return numberMap[codeTrimmed]!;
     }
 
-    // Check if it's a letter
-    if (letterMap.containsKey(code)) {
-      return letterMap[code]!;
+    // Check if it's a single letter (A-Z or a-z)
+    // Add trailing period to make iOS TTS speak the letter name correctly
+    if (RegExp(r'^[A-Za-z]$').hasMatch(codeTrimmed)) {
+      return '${codeTrimmed.toUpperCase()}.';
     }
 
     // Fallback: return code as-is
-    return code;
+    return codeTrimmed;
   }
 }
