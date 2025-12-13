@@ -1126,6 +1126,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         final includedMoveCodes = trainingController
                             .getIncludedUnlockedMoveCodes(storyController.state);
 
+                        if (kDebugMode) {
+                          print('[HomeScreen] START WORKOUT: includedMoveCodes=$includedMoveCodes');
+                        }
+
                         // Create workout configuration and navigate
                         final config = WorkoutConfiguration(
                           rounds: rounds,

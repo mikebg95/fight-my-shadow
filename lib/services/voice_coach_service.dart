@@ -120,8 +120,9 @@ class VoiceCoachService {
 
     // Map letter codes to phonetic pronunciations
     // This prevents TTS from saying "capital P" etc.
+    // Note: "A" uses "aye" (not "ay") because iOS TTS mispronounces "ay" as "I"
     const letterMap = {
-      'A': 'ay',
+      'A': 'aye',
       'B': 'bee',
       'C': 'see',
       'D': 'dee',

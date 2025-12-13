@@ -51,6 +51,7 @@ class BoxingHomeScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const LearningProgressScreen(),
+                          settings: const RouteSettings(name: '/academy'),
                         ),
                       );
                     },

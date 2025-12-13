@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Celebration screen shown when a move is unlocked.
@@ -94,14 +93,6 @@ class _MoveUnlockedCelebrationScreenState
     // 3. Navigating to Academy after all celebrations
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
-    } else {
-      // Fallback: Navigate directly to Academy if we can't pop
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => const LearningProgressScreen(),
-        ),
-        (route) => false,
-      );
     }
   }
 

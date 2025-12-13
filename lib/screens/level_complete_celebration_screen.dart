@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/services/sound_effects_service.dart';
 import 'package:fight_my_shadow/utils/responsive.dart';
 
@@ -150,14 +149,12 @@ class _LevelCompleteCelebrationScreenState
   }
 
   void _navigateBack() {
-    // Navigate directly to Academy screen (LearningProgressScreen)
-    // Use pushAndRemoveUntil to guarantee we land on Academy, not Home
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const LearningProgressScreen(),
-      ),
-      (route) => false, // Remove all previous routes
-    );
+    // Simply pop back to the calling screen (move_detail_screen)
+    // The move_detail_screen will then handle navigation to Academy
+    // This preserves the stack: BoxingHome -> Academy -> MoveDetail -> [celebrations]
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

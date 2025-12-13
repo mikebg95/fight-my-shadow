@@ -12,7 +12,6 @@ import 'package:fight_my_shadow/main.dart';
 import 'package:fight_my_shadow/screens/academy_exam_screen.dart';
 import 'package:fight_my_shadow/screens/move_unlocked_celebration_screen.dart';
 import 'package:fight_my_shadow/screens/level_complete_celebration_screen.dart';
-import 'package:fight_my_shadow/screens/learning_progress_screen.dart';
 import 'package:fight_my_shadow/utils/responsive.dart';
 
 /// Screen that displays detailed information about a single move.
@@ -183,7 +182,6 @@ class MoveDetailScreen extends StatelessWidget {
 
               if (_isLevelComplete(unlockedMoveLevel, updatedState)) {
                 // Show the LEVEL COMPLETE celebration!
-                // This will navigate to Academy when done
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -194,15 +192,20 @@ class MoveDetailScreen extends StatelessWidget {
                     settings: const RouteSettings(name: '/level-celebration'),
                   ),
                 );
-              } else {
-                // No level complete, navigate to Academy now
+                // After level celebration, navigate to Academy
                 if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => const LearningProgressScreen(),
-                    ),
-                    (route) => false,
-                  );
+                  Navigator.of(context).popUntil((route) {
+                    return route.isFirst || route.settings.name == '/academy';
+                  });
+                }
+              } else {
+                // No level complete, pop back to Academy
+                // This preserves the stack: BoxingHome stays underneath Academy
+                if (context.mounted) {
+                  Navigator.of(context).popUntil((route) {
+                    // Pop until we reach Academy (LearningProgressScreen) or root
+                    return route.isFirst || route.settings.name == '/academy';
+                  });
                 }
               }
             }
@@ -306,7 +309,6 @@ class MoveDetailScreen extends StatelessWidget {
 
             if (_isLevelComplete(unlockedMoveLevel, updatedState)) {
               // Show the LEVEL COMPLETE celebration!
-              // This will navigate to Academy when done
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -317,15 +319,20 @@ class MoveDetailScreen extends StatelessWidget {
                   settings: const RouteSettings(name: '/level-celebration'),
                 ),
               );
-            } else {
-              // No level complete, navigate to Academy now
+              // After level celebration, navigate to Academy
               if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (context) => const LearningProgressScreen(),
-                  ),
-                  (route) => false,
-                );
+                Navigator.of(context).popUntil((route) {
+                  return route.isFirst || route.settings.name == '/academy';
+                });
+              }
+            } else {
+              // No level complete, pop back to Academy
+              // This preserves the stack: BoxingHome stays underneath Academy
+              if (context.mounted) {
+                Navigator.of(context).popUntil((route) {
+                  // Pop until we reach Academy (LearningProgressScreen) or root
+                  return route.isFirst || route.settings.name == '/academy';
+                });
               }
             }
           }

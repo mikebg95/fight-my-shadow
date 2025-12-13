@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:fight_my_shadow/domain/combos/combo.dart';
 import 'package:fight_my_shadow/domain/combos/combo_generator.dart';
 import 'package:fight_my_shadow/main.dart';
@@ -46,6 +47,9 @@ class BoxingComboGenerator implements ComboGenerator {
   /// Pass null to allow all moves. Pass an empty list to block all moves.
   void setAllowedMoveCodes(List<String>? codes) {
     _allowedMoveCodes = codes;
+    if (kDebugMode) {
+      print('[BoxingComboGenerator] setAllowedMoveCodes: ${codes?.length ?? 'null'} codes: $codes');
+    }
   }
 
   @override
@@ -63,6 +67,10 @@ class BoxingComboGenerator implements ComboGenerator {
     if (previousCombo != null && _isIdenticalCombo(codes, previousCombo.moveCodes)) {
       codes = _generateComboCodes(difficulty);
       codes = _ensureValidCombo(codes);
+    }
+
+    if (kDebugMode) {
+      print('[BoxingComboGenerator] generateCombo: $codes (allowed=${_allowedMoveCodes?.length ?? "all"})');
     }
 
     return Combo(
@@ -265,20 +273,27 @@ class BoxingComboGenerator implements ComboGenerator {
   /// - No more than 2 consecutive identical moves
   /// - At least one punch move
   /// - Not empty
+  ///
+  /// IMPORTANT: When [_allowedMoveCodes] is set, all fallback insertions
+  /// respect the filter to prevent disallowed moves from appearing.
   List<String> _ensureValidCombo(List<String> codes) {
     if (codes.isEmpty) {
-      // Fallback to basic jab-cross if empty
+      // Fallback: get allowed punches (or any allowed moves)
+      final fallbackCodes = _getFallbackCodes();
+      if (fallbackCodes.isNotEmpty) {
+        return fallbackCodes;
+      }
+      // Ultimate fallback if no allowed moves at all (shouldn't happen)
       return ['1', '2'];
     }
 
     // Ensure at least one punch
     if (!_containsPunch(codes)) {
-      // Insert a random punch at a random position
-      final punches = _repository.getAllPunches();
-      if (punches.isNotEmpty) {
-        final punchCode = punches[_random.nextInt(punches.length)].code;
+      // Insert a random allowed punch at a random position
+      final allowedPunchCode = _getRandomAllowedPunchCode();
+      if (allowedPunchCode != null) {
         final insertIndex = _random.nextInt(codes.length + 1);
-        codes.insert(insertIndex, punchCode);
+        codes.insert(insertIndex, allowedPunchCode);
       }
     }
 
@@ -286,6 +301,53 @@ class BoxingComboGenerator implements ComboGenerator {
     codes = _limitConsecutiveRepeats(codes);
 
     return codes;
+  }
+
+  /// Gets a random punch code that respects [_allowedMoveCodes] filtering.
+  /// Returns null if no allowed punches are available.
+  String? _getRandomAllowedPunchCode() {
+    var punches = _repository.getAllPunches();
+
+    // Filter by allowed codes if set
+    if (_allowedMoveCodes != null) {
+      punches = punches.where((m) => _allowedMoveCodes!.contains(m.code)).toList();
+    }
+
+    if (punches.isEmpty) {
+      return null;
+    }
+
+    return punches[_random.nextInt(punches.length)].code;
+  }
+
+  /// Gets fallback codes when combo generation produces an empty list.
+  /// Respects [_allowedMoveCodes] filtering.
+  /// Returns up to 2 punch codes, or any allowed codes if no punches available.
+  List<String> _getFallbackCodes() {
+    // Try to get allowed punches first
+    var punches = _repository.getAllPunches();
+    if (_allowedMoveCodes != null) {
+      punches = punches.where((m) => _allowedMoveCodes!.contains(m.code)).toList();
+    }
+
+    if (punches.isNotEmpty) {
+      // Return 1-2 random allowed punches
+      if (punches.length == 1) {
+        return [punches.first.code];
+      }
+      // Shuffle and take first 2
+      final shuffled = List<Move>.from(punches)..shuffle(_random);
+      return [shuffled[0].code, shuffled[1].code];
+    }
+
+    // No allowed punches - try any allowed move codes
+    if (_allowedMoveCodes != null && _allowedMoveCodes!.isNotEmpty) {
+      final shuffled = List<String>.from(_allowedMoveCodes!)..shuffle(_random);
+      return shuffled.take(2).toList();
+    }
+
+    // No allowed codes at all - return empty (caller handles this)
+    return [];
   }
 
   /// Checks if the combo contains at least one punch move.
